@@ -25,7 +25,6 @@ type SendInitializeGameEvent struct {
 }
 
 type ReceiveInitializeGameEvent struct {
-	SendInitializeGameEvent
 	JoinCode string    `json:"joinCode"`
 	Sent     time.Time `json:"sent"`
 }

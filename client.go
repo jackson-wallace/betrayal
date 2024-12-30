@@ -27,7 +27,8 @@ type Client struct {
 	connection *websocket.Conn
 	manager    *Manager
 
-	chatroom string
+	// chatroom string
+	GameID string
 
 	egress chan Event
 }

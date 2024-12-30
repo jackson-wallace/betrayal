@@ -1,15 +1,29 @@
+import { setJoinCodeHtml, setPlayersInLobbyHtml } from "./app.js";
+
 type EventPayloads = {
   // send_message: SendMessageEvent;
   // receive_message: ReceiveMessageEvent;
   // change_room: ChangeChatRoomEvent;
   send_initialize_game: SendInitializeGameEvent;
+  receive_initialize_game: ReceiveInitializeGameEvent;
 };
 
-class Event<T extends keyof EventPayloads> {
+class BaseEvent {
+  type: keyof EventPayloads;
+  payload: any;
+
+  constructor(type: keyof EventPayloads, payload: any) {
+    this.type = type;
+    this.payload = payload;
+  }
+}
+
+class Event<T extends keyof EventPayloads> extends BaseEvent {
   type: T;
   payload: EventPayloads[T];
 
   constructor(type: T, payload: EventPayloads[T]) {
+    super(type, payload);
     this.type = type;
     this.payload = payload;
   }
@@ -24,12 +38,10 @@ export class SendInitializeGameEvent {
 }
 
 class ReceiveInitializeGameEvent {
-  playerID: string;
   joinCode: string;
   sent: string;
 
-  constructor(playerID: string, joinCode: string, sent: string) {
-    this.playerID = playerID;
+  constructor(joinCode: string, sent: string) {
     this.joinCode = joinCode;
     this.sent = sent;
   }
@@ -98,29 +110,30 @@ export class WSDriver {
   handleMessage(event: MessageEvent) {
     const eventData = JSON.parse(event.data);
 
-    console.log("eventData", eventData);
+    const e = Object.assign(
+      new BaseEvent(eventData.type, eventData.payload),
+      eventData,
+    );
 
-    // const e = Object.assign(new Event(), eventData);
-
-    // this.routeEvent(e);
+    this.routeEvent(e);
   }
 
-  routeEvent(event: MessageEvent) {
+  routeEvent(event: BaseEvent) {
     if (event.type === undefined) {
       alert("no type field in the event");
     }
 
     switch (event.type) {
       case "receive_initialize_game":
-        console.log("receive_initialize_game");
+        const receiveInitializeGameEvent = new ReceiveInitializeGameEvent(
+          event.payload.joinCode,
+          event.payload.sent,
+        );
 
-      // case "receive_message":
-      //   const messageEvent = Object.assign(
-      //     new NewMessageEvent(),
-      //     event.payload,
-      //   );
-      //   appendChatMessage(messageEvent);
-      //   break;
+        setJoinCodeHtml(receiveInitializeGameEvent.joinCode);
+        setPlayersInLobbyHtml(1);
+        break;
+
       default:
         alert("unsupported message type");
     }

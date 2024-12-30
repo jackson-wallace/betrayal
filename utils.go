@@ -23,7 +23,12 @@ package main
 //   }
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"log"
 	"math"
+
+	"github.com/google/uuid"
 )
 
 type Hex struct {
@@ -115,4 +120,17 @@ func AxialSpiral(center Hex, radius int) []Hex {
 		results = append(results, AxialRing(center, i)...)
 	}
 	return results
+}
+
+func NewGameID() string {
+	id := "game-" + uuid.New().String()
+	return id
+}
+
+func NewJoinCode(length int) string {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		log.Println("Failed to generate join code")
+	}
+	return hex.EncodeToString(bytes)
 }

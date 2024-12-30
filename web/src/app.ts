@@ -35,7 +35,6 @@ function main() {
 
       document.getElementById("new-game")!.addEventListener("click", () => {
         const outgoingEvent = new SendInitializeGameEvent(playerID);
-        console.log("outgoingEvent", outgoingEvent);
         ws.sendEvent("send_initialize_game", outgoingEvent);
         currentState = GameState.StartGame;
         main();
@@ -51,8 +50,8 @@ function main() {
     case GameState.StartGame:
       app.innerHTML = `
         <div class="center">
-          <h3>Join code: 123</h3>
-          <p>1 player(s) in the lobby</p>
+          <h3 id="join-code">Join code: ____</h3>
+          <p id="players-in-lobby">0 player(s) in the lobby</p>
           <br />
           <button id="start-btn">Start game</button>
         </div>
@@ -141,3 +140,18 @@ function main() {
 }
 
 main();
+
+export function setJoinCodeHtml(joinCode: string) {
+  const element = document.getElementById("join-code");
+  if (element) {
+    element.innerHTML = `Join Code: ${joinCode.toUpperCase()}`;
+  }
+}
+
+export function setPlayersInLobbyHtml(playerCount: number) {
+  const element = document.getElementById("players-in-lobby");
+
+  if (element) {
+    element.innerHTML = `${playerCount} player(s) in the lobby`;
+  }
+}

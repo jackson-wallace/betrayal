@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	// "encoding/json"
+	"encoding/json"
 	"errors"
-	// "fmt"
+	"fmt"
 	"log"
 	"net/http"
 	"sync"
-	// "time"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -51,6 +51,31 @@ func (m *Manager) setupEventHandlers() {
 
 func InitializeGameHandler(event Event, c *Client) error {
 	log.Printf("event: %v", event)
+	var sendInitializeGameEvent SendInitializeGameEvent
+
+	if err := json.Unmarshal(event.Payload, &sendInitializeGameEvent); err != nil {
+		return fmt.Errorf("bad payload in request: %v", err)
+	}
+
+	var receiveInitializeGameEvent ReceiveInitializeGameEvent
+
+	receiveInitializeGameEvent.JoinCode = NewJoinCode(2)
+	receiveInitializeGameEvent.Sent = time.Now()
+
+	data, err := json.Marshal(receiveInitializeGameEvent)
+	if err != nil {
+		return fmt.Errorf("failed to marshal broadcast message: %v", err)
+	}
+
+	outgoingEvent := Event{
+		Payload: data,
+		Type:    EventReceiveInitializeGame,
+	}
+
+	c.egress <- outgoingEvent
+
+	c.GameID = NewGameID()
+
 	return nil
 }
 
