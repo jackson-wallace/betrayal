@@ -1,7 +1,11 @@
 import { Game } from "./objects/game.js";
 import { initFavicon } from "./utils/favicon.js";
 import { getPlayerID } from "./utils/player.js";
-import { SendInitializeGameEvent, WSDriver } from "./ws-driver.js";
+import {
+  SendInitializeGameEvent,
+  SendJoinGameEvent,
+  WSDriver,
+} from "./ws-driver.js";
 
 enum GameState {
   StartOrJoin = "startOrJoin",
@@ -79,6 +83,12 @@ function main() {
         const code = (document.getElementById("join-code") as HTMLInputElement)
           .value;
         if (code) {
+          const outgoingEvent = new SendJoinGameEvent(
+            playerID,
+            code.toLowerCase(),
+          );
+          ws.sendEvent("send_join_game", outgoingEvent);
+
           currentState = GameState.Waiting;
           main();
         } else {

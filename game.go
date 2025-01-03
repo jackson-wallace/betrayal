@@ -1,19 +1,10 @@
 package main
 
-type Game struct {
-	ID    string
-	State *GameState
-}
-
-type GameState struct {
-	Players map[string]*Player `json:"players"`
-	Status  string             `json:"status"`
-}
-
 type Player struct {
-	ID    string       `json:"id"`
-	Color string       `json:"color"`
-	State *PlayerState `json:"state"`
+	ID     string       `json:"id"`
+	Color  string       `json:"color"`
+	State  *PlayerState `json:"state"`
+	Client *Client
 }
 
 type PlayerState struct {
@@ -25,7 +16,43 @@ type PlayerState struct {
 	CellsAtMax   []Hex `json:"cellsAtMax"`
 }
 
-func NewGameState(currentPlayerID string) *GameState {
+type GameState struct {
+	Players map[string]*Player `json:"players"`
+	Status  string             `json:"status"`
+}
+
+type Game struct {
+	ID         string
+	JoinCode   string
+	BoardSize  int
+	MainClient *Client
+	State      *GameState
+}
+
+func NewPlayer(position Hex) *Player {
+	return &Player{
+		State: NewPlayerState(position),
+	}
+}
+
+func NewPlayerState(position Hex) *PlayerState {
+	return &PlayerState{
+		Hearts:       3,
+		Range:        1,
+		ActionPoints: 0,
+		Position:     position,
+		CellsInRange: []Hex{},
+		CellsAtMax:   []Hex{},
+	}
+}
+
+func NewGame() *Game {
+	return &Game{
+		State: NewGameState(),
+	}
+}
+
+func NewGameState() *GameState {
 	return &GameState{
 		Players: make(map[string]*Player),
 		Status:  "waiting",

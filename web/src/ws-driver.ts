@@ -3,6 +3,8 @@ import { setJoinCodeHtml, setPlayersInLobbyHtml } from "./app.js";
 type EventPayloads = {
   send_initialize_game: SendInitializeGameEvent;
   receive_initialize_game: ReceiveInitializeGameEvent;
+  send_join_game: SendJoinGameEvent;
+  receive_join_game: ReceiveJoinGameEvent;
 };
 
 class BaseEvent {
@@ -44,6 +46,25 @@ class ReceiveInitializeGameEvent {
   }
 }
 
+export class SendJoinGameEvent {
+  playerID: string;
+  joinCode: string;
+
+  constructor(playerID: string, joinCode: string) {
+    this.playerID = playerID;
+    this.joinCode = joinCode;
+  }
+}
+
+class ReceiveJoinGameEvent {
+  playerCount: number;
+  sent: string;
+
+  constructor(playerCount: number, sent: string) {
+    this.playerCount = playerCount;
+    this.sent = sent;
+  }
+}
 
 export class WSDriver {
   conn: WebSocket | null;
@@ -100,6 +121,15 @@ export class WSDriver {
 
         setJoinCodeHtml(receiveInitializeGameEvent.joinCode);
         setPlayersInLobbyHtml(1);
+        break;
+
+      case "receive_join_game":
+        const receiveJoinGameEvent = new ReceiveJoinGameEvent(
+          event.payload.playerCount,
+          event.payload.sent,
+        );
+
+        setPlayersInLobbyHtml(receiveJoinGameEvent.playerCount);
         break;
 
       default:

@@ -2,13 +2,10 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -25,16 +22,15 @@ type Manager struct {
 	clients ClientList
 	sync.RWMutex
 
-
 	handlers map[string]EventHandler
-	games    map[string]Game
+	games    map[string]*Game
 }
 
 func NewManager(ctx context.Context) *Manager {
 	m := &Manager{
 		clients:  make(ClientList),
 		handlers: make(map[string]EventHandler),
-		games:    make(map[string]Game),
+		games:    make(map[string]*Game),
 	}
 
 	m.setupEventHandlers()
@@ -43,35 +39,7 @@ func NewManager(ctx context.Context) *Manager {
 
 func (m *Manager) setupEventHandlers() {
 	m.handlers[EventSendInitializeGame] = InitializeGameHandler
-}
-
-func InitializeGameHandler(event Event, c *Client) error {
-	var sendInitializeGameEvent SendInitializeGameEvent
-
-	if err := json.Unmarshal(event.Payload, &sendInitializeGameEvent); err != nil {
-		return fmt.Errorf("bad payload in request: %v", err)
-	}
-
-	var receiveInitializeGameEvent ReceiveInitializeGameEvent
-
-	receiveInitializeGameEvent.JoinCode = NewJoinCode(2)
-	receiveInitializeGameEvent.Sent = time.Now()
-
-	data, err := json.Marshal(receiveInitializeGameEvent)
-	if err != nil {
-		return fmt.Errorf("failed to marshal broadcast message: %v", err)
-	}
-
-	outgoingEvent := Event{
-		Payload: data,
-		Type:    EventReceiveInitializeGame,
-	}
-
-	c.egress <- outgoingEvent
-
-	c.GameID = NewGameID()
-
-	return nil
+	m.handlers[EventSendJoinGame] = JoinGameHandler
 }
 
 func (m *Manager) routeEvent(event Event, c *Client) error {

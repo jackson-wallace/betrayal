@@ -27,6 +27,8 @@ import (
 	"encoding/hex"
 	"log"
 	"math"
+	mathrand "math/rand"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -133,4 +135,26 @@ func NewJoinCode(length int) string {
 		log.Println("Failed to generate join code")
 	}
 	return hex.EncodeToString(bytes)
+}
+
+func getRandomInt(min, max int) int {
+	source := mathrand.NewSource(time.Now().UnixNano())
+	rng := mathrand.New(source)
+	return rng.Intn(max-min) + min
+}
+
+func GetRandomPosition(boardSize int) Hex {
+	lowerBound := boardSize / 2
+	upperBound := (boardSize-1)*2 - lowerBound
+
+	var r, q int
+	for {
+		r = getRandomInt(0, boardSize)
+		q = getRandomInt(0, boardSize)
+		if r+q >= lowerBound && r+q <= upperBound {
+			break
+		}
+	}
+
+	return Hex{R: r, Q: q}
 }
