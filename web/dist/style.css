@@ -16,6 +16,10 @@ button {
   font-family: "JetBrains Mono", monospace;
 }
 
+input {
+  font-family: "JetBrains Mono", monospace;
+}
+
 .app {
   width: 100%;
   height: 100%;
