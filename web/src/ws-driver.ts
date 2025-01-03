@@ -1,9 +1,6 @@
 import { setJoinCodeHtml, setPlayersInLobbyHtml } from "./app.js";
 
 type EventPayloads = {
-  // send_message: SendMessageEvent;
-  // receive_message: ReceiveMessageEvent;
-  // change_room: ChangeChatRoomEvent;
   send_initialize_game: SendInitializeGameEvent;
   receive_initialize_game: ReceiveInitializeGameEvent;
 };
@@ -47,35 +44,6 @@ class ReceiveInitializeGameEvent {
   }
 }
 
-// class SendMessageEvent {
-//   message: string;
-//   from: string;
-//
-//   constructor(message: string, from: string) {
-//     this.message = message;
-//     this.from = from;
-//   }
-// }
-//
-// class ReceiveMessageEvent {
-//   message: string;
-//   from: string;
-//   sent: string;
-//
-//   constructor(message: string, from: string, sent: string) {
-//     this.message = message;
-//     this.from = from;
-//     this.sent = sent;
-//   }
-// }
-//
-// class ChangeChatRoomEvent {
-//   name: string;
-//
-//   constructor(name: string) {
-//     this.name = name;
-//   }
-// }
 
 export class WSDriver {
   conn: WebSocket | null;
