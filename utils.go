@@ -1,27 +1,5 @@
 package main
 
-// Typescript
-// getRandomPosition(): Hex {
-//   const lowerBound = Math.floor(this.boardSize / 2);
-//   const upperBound = (this.boardSize - 1) * 2 - lowerBound;
-
-//   let r = this.getRandomInt(0, this.boardSize);
-//   let q = this.getRandomInt(0, this.boardSize);
-//   while (!(r + q >= lowerBound && r + q <= upperBound)) {
-//     r = this.getRandomInt(0, this.boardSize);
-//     q = this.getRandomInt(0, this.boardSize);
-//   }
-
-//   return { r, q };
-// }
-
-// Typecript
-// getRandomInt(min: number, max: number): number {
-//     min = Math.ceil(min);
-//     max = Math.floor(max);
-//     return Math.floor(Math.random() * (max - min) + min);
-//   }
-
 import (
 	"crypto/rand"
 	"encoding/hex"
