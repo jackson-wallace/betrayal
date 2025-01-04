@@ -1,13 +1,14 @@
-import { Game } from "./objects/game.js";
+import { Game, GameState } from "./objects/game.js";
 import { initFavicon } from "./utils/favicon.js";
 import { getPlayerID } from "./utils/player.js";
 import {
   SendInitializeGameEvent,
   SendJoinGameEvent,
+  SendStartGameEvent,
   WSDriver,
 } from "./ws-driver.js";
 
-enum GameState {
+export enum GameStatus {
   StartOrJoin = "startOrJoin",
   StartGame = "startGame",
   JoinGame = "joinGame",
@@ -15,7 +16,15 @@ enum GameState {
   InProgress = "inProgress",
 }
 
-let currentState: GameState = GameState.StartOrJoin;
+type AppState = {
+  currentState: GameStatus;
+  game: Game | null;
+};
+
+export const appState: AppState = {
+  currentState: GameStatus.StartOrJoin,
+  game: null,
+};
 
 const playerID = getPlayerID();
 
@@ -24,132 +33,141 @@ initFavicon();
 const ws = new WSDriver();
 ws.connectWebsocket();
 
-function main() {
+function renderStartOrJoin(appState: AppState, ws: WSDriver, playerID: string) {
   const app = document.querySelector<HTMLDivElement>("#app")!;
-  switch (currentState) {
-    case GameState.StartOrJoin:
-      app.innerHTML = `
-        <div class="center">
-          <h1>War Game</h1>
-          <button id="new-game">New Game</button>
-          <br />
-          <button id="join-game">Join Game</button>
-        </div>
-      `;
+  app.innerHTML = `
+    <div class="center">
+      <h1>War Game</h1>
+      <button id="new-game">New Game</button>
+      <br />
+      <button id="join-game">Join Game</button>
+    </div>
+  `;
 
-      document.getElementById("new-game")!.addEventListener("click", () => {
-        const outgoingEvent = new SendInitializeGameEvent(playerID);
-        ws.sendEvent("send_initialize_game", outgoingEvent);
-        currentState = GameState.StartGame;
-        main();
-      });
+  document.getElementById("new-game")!.addEventListener("click", () => {
+    const outgoingEvent = new SendInitializeGameEvent(playerID);
+    ws.sendEvent("send_initialize_game", outgoingEvent);
+    appState.currentState = GameStatus.StartGame;
+    renderApp(appState, ws, playerID);
+  });
 
-      document.getElementById("join-game")!.addEventListener("click", () => {
-        currentState = GameState.JoinGame;
-        main();
-      });
+  document.getElementById("join-game")!.addEventListener("click", () => {
+    appState.currentState = GameStatus.JoinGame;
+    renderApp(appState, ws, playerID);
+  });
+}
 
+function renderStartGame(appState: AppState, ws: WSDriver, playerID: string) {
+  const app = document.querySelector<HTMLDivElement>("#app")!;
+  app.innerHTML = `
+    <div class="center">
+      <h3 id="join-code">Join code: ____</h3>
+      <p id="players-in-lobby">0 player(s) in the lobby</p>
+      <br />
+      <button id="start-btn">Start game</button>
+    </div>
+  `;
+
+  document.getElementById("start-btn")!.addEventListener("click", () => {
+    const outgoingEvent = new SendStartGameEvent(playerID);
+    ws.sendEvent("send_start_game", outgoingEvent);
+    appState.currentState = GameStatus.InProgress;
+    renderApp(appState, ws, playerID);
+  });
+}
+
+function renderJoinGame(appState: AppState, ws: WSDriver, playerID: string) {
+  const app = document.querySelector<HTMLDivElement>("#app")!;
+  app.innerHTML = `
+    <div class="center">
+      <label>Enter join code</label>
+      <br />
+      <input id="join-code" type="text"></input>
+      <br />
+      <button id="join-btn">Join</button>
+    </div>
+  `;
+
+  document.getElementById("join-btn")!.addEventListener("click", () => {
+    const code = (document.getElementById("join-code") as HTMLInputElement)
+      .value;
+    if (code) {
+      const outgoingEvent = new SendJoinGameEvent(playerID, code.toLowerCase());
+      ws.sendEvent("send_join_game", outgoingEvent);
+
+      appState.currentState = GameStatus.Waiting;
+      renderApp(appState, ws, playerID);
+    } else {
+      alert("Please enter a valid code.");
+    }
+  });
+}
+
+function renderWaiting() {
+  const app = document.querySelector<HTMLDivElement>("#app")!;
+  app.innerHTML = `
+    <div class="center">
+      <h3>Waiting for game to start...</h3>
+    </div>
+  `;
+}
+
+export function renderInProgress(
+  appState: AppState,
+  ws: WSDriver,
+  gameState: GameState,
+) {
+  const app = document.querySelector<HTMLDivElement>("#app")!;
+  app.innerHTML = `
+    <canvas id="board">Game Board</canvas>
+  `;
+
+  const canvas = document.getElementById("board") as HTMLCanvasElement;
+  const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+
+  canvas.width = window.innerWidth * devicePixelRatio;
+  canvas.height = window.innerHeight * devicePixelRatio;
+
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  canvas.style.width = `${window.innerWidth}px`;
+  canvas.style.height = `${window.innerHeight}px`;
+
+  appState.game = new Game(canvas, ws, playerID, gameState);
+
+  addEventListener("resize", () => {
+    if (appState.game) {
+      appState.game.display.handleResize();
+    }
+  });
+
+  addEventListener("click", (event) => {
+    if (appState.game) {
+      appState.game.handleClick(event);
+    }
+  });
+}
+
+function renderApp(appState: AppState, ws: WSDriver, playerID: string) {
+  switch (appState.currentState) {
+    case GameStatus.StartOrJoin:
+      renderStartOrJoin(appState, ws, playerID);
       break;
-
-    case GameState.StartGame:
-      app.innerHTML = `
-        <div class="center">
-          <h3 id="join-code">Join code: ____</h3>
-          <p id="players-in-lobby">0 player(s) in the lobby</p>
-          <br />
-          <button id="start-btn">Start game</button>
-        </div>
-      `;
-
-      document.getElementById("start-btn")!.addEventListener("click", () => {
-        currentState = GameState.InProgress;
-        main();
-      });
-
+    case GameStatus.StartGame:
+      renderStartGame(appState, ws, playerID);
       break;
-
-    case GameState.JoinGame:
-      app.innerHTML = `
-        <div class="center">
-          <label>Enter join code</label>
-          <br />
-          <input id="join-code" type="text"></input>
-          <br />
-          <button id="join-btn">Join</button>
-        </div>
-      `;
-
-      document.getElementById("join-btn")!.addEventListener("click", () => {
-        const code = (document.getElementById("join-code") as HTMLInputElement)
-          .value;
-        if (code) {
-          const outgoingEvent = new SendJoinGameEvent(
-            playerID,
-            code.toLowerCase(),
-          );
-          ws.sendEvent("send_join_game", outgoingEvent);
-
-          currentState = GameState.Waiting;
-          main();
-        } else {
-          alert("Please enter a valid code.");
-        }
-      });
-
+    case GameStatus.JoinGame:
+      renderJoinGame(appState, ws, playerID);
       break;
-
-    case GameState.Waiting:
-      app.innerHTML = `
-        <div class="center">
-          <h3>Waiting for game to start...</h3>
-        </div>
-      `;
-
+    case GameStatus.Waiting:
+      renderWaiting();
       break;
-
-    case GameState.InProgress:
-      app.innerHTML = `
-        <div>
-          <canvas id="board">Game Board</canvas>
-          <div class="game-info">
-            <h3>Game in Progress</h3>
-            <p>Score: <span id="score">0</span></p>
-            <button id="quit-game">Quit Game</button>
-          </div>
-        </div>
-      `;
-
-      const canvas = document.getElementById("board") as HTMLCanvasElement;
-      const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-
-      canvas.width = window.innerWidth * devicePixelRatio;
-      canvas.height = window.innerHeight * devicePixelRatio;
-
-      ctx.scale(devicePixelRatio, devicePixelRatio);
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
-
-      const game = new Game(canvas, ws);
-
-      addEventListener("resize", () => {
-        game.display.handleResize();
-      });
-
-      addEventListener("click", (event) => {
-        game.handleClick(event);
-      });
-
-      document.getElementById("quit-game")!.addEventListener("click", () => {
-        if (confirm("Are you sure you want to quit the game?")) {
-          currentState = GameState.StartOrJoin;
-          main();
-        }
-      });
+    case GameStatus.InProgress:
+      // renderInProgress(appState, ws);
       break;
   }
 }
 
-main();
+renderApp(appState, ws, playerID);
 
 export function setJoinCodeHtml(joinCode: string) {
   const element = document.getElementById("join-code");

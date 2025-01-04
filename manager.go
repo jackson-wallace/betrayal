@@ -40,6 +40,7 @@ func NewManager(ctx context.Context) *Manager {
 func (m *Manager) setupEventHandlers() {
 	m.handlers[EventSendInitializeGame] = InitializeGameHandler
 	m.handlers[EventSendJoinGame] = JoinGameHandler
+	m.handlers[EventSendStartGame] = StartGameHandler
 }
 
 func (m *Manager) routeEvent(event Event, c *Client) error {

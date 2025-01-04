@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -18,6 +19,8 @@ const (
 	EventReceiveInitializeGame = "receive_initialize_game"
 	EventSendJoinGame          = "send_join_game"
 	EventReceiveJoinGame       = "receive_join_game"
+	EventSendStartGame         = "send_start_game"
+	EventReceiveStartGame      = "receive_start_game"
 )
 
 type SendInitializeGameEvent struct {
@@ -53,6 +56,8 @@ func InitializeGameHandler(event Event, c *Client) error {
 	newPlayer.ID = sendInitializeGameEvent.PlayerID
 	newPlayer.Color = "blue"
 	newPlayer.Client = c
+	newPlayer.State.CellsInRange = AxialSpiral(position, newPlayer.State.Range)
+	newPlayer.State.CellsAtMaxRange = AxialRing(position, newPlayer.State.Range)
 	newGame.State.AddPlayer(newPlayer)
 
 	c.GameID = newGameID
@@ -98,12 +103,17 @@ func JoinGameHandler(event Event, c *Client) error {
 	for gameID, game := range c.manager.games {
 		if sendJoinGameEvent.JoinCode == game.JoinCode {
 
+			// TODO
+			// make sure position isn't taken by another player
 			position := GetRandomPosition(game.BoardSize)
 
 			newPlayer := NewPlayer(position)
 			newPlayer.ID = sendJoinGameEvent.PlayerID
 			newPlayer.Color = "red"
 			newPlayer.Client = c
+			newPlayer.State.CellsInRange = AxialSpiral(position, newPlayer.State.Range)
+			newPlayer.State.CellsAtMaxRange = AxialRing(position, newPlayer.State.Range)
+
 			game.State.AddPlayer(newPlayer)
 
 			c.GameID = gameID
@@ -129,6 +139,45 @@ func JoinGameHandler(event Event, c *Client) error {
 			return nil
 
 		}
+	}
+
+	return nil
+}
+
+type SendStartGameEvent struct {
+	PlayerID string `json:"playerID"`
+}
+
+type ReceiveStartGameEvent struct {
+	GameState GameState `json:"gameState"`
+	Sent      time.Time `json:"sent"`
+}
+
+func StartGameHandler(event Event, c *Client) error {
+	var sendStartGameEvent SendStartGameEvent
+	if err := json.Unmarshal(event.Payload, &sendStartGameEvent); err != nil {
+		return fmt.Errorf("bad payload in request: %v", err)
+	}
+
+	var receiveStartGameEvent ReceiveStartGameEvent
+
+	game := c.manager.games[c.GameID]
+
+	receiveStartGameEvent.GameState = *game.State
+	receiveStartGameEvent.Sent = time.Now()
+
+	data, err := json.Marshal(receiveStartGameEvent)
+	if err != nil {
+		log.Printf("Error marshalling GameState: %v", err)
+	}
+
+	outgoingEvent := Event{
+		Payload: data,
+		Type:    EventReceiveStartGame,
+	}
+
+	for _, player := range game.State.Players {
+		player.Client.egress <- outgoingEvent
 	}
 
 	return nil

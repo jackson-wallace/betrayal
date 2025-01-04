@@ -9,28 +9,27 @@ import { WSDriver } from "../ws-driver.js";
 import { Player } from "./player.js";
 
 export class Game {
-  currentPlayer: Player;
-  state: GameState;
+  currentPlayerID: string;
+  _state: GameState;
   ws: WSDriver;
   display: DisplayDriver;
 
-  constructor(canvas: HTMLCanvasElement, ws: WSDriver) {
-    this.currentPlayer = new Player("1", "LightSkyBlue", { r: 9, q: 9 });
-    this.state = new GameState("1");
-    this.state.addPlayer(this.currentPlayer);
+  constructor(
+    canvas: HTMLCanvasElement,
+    ws: WSDriver,
+    playerID: string,
+    state: GameState,
+  ) {
     this.ws = ws;
-    this.display = new DisplayDriver(canvas, this.state);
+    this.currentPlayerID = playerID;
+    this._state = state;
+    this._state.currentPlayerId = playerID;
+    this.display = new DisplayDriver(canvas, this._state);
     this.initGame();
   }
 
   initGame() {
     this.display.render();
-  }
-
-  getRandomInt(min: number, max: number): number {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min) + min);
   }
 
   handleClick(event: MouseEvent) {
@@ -48,23 +47,16 @@ export class Game {
   }
 
   movePlayer(hex: Hex) {
-    const fromCell = this.display.board.getCell(
-      this.currentPlayer.state.position,
-    );
+    const player = this.state.players[this.currentPlayerID];
+    const fromCell = this.display.board.getCell(player.state.position);
     const toCell = this.display.board.getCell(hex);
 
     if (fromCell && toCell) {
-      this.currentPlayer.state.position = hex;
+      player.state.position = hex;
 
-      this.currentPlayer.state.cellsInRange = axialSpiral(
-        hex,
-        this.currentPlayer.state.range,
-      );
+      player.state.cellsInRange = axialSpiral(hex, player.state.range);
 
-      this.currentPlayer.state.cellsAtMaxRange = axialRing(
-        hex,
-        this.currentPlayer.state.range,
-      );
+      player.state.cellsAtMaxRange = axialRing(hex, player.state.range);
 
       this.display.render();
     }
@@ -72,11 +64,18 @@ export class Game {
 
   startGame() { }
 
-  joinGame() { }
-
   endGame() { }
 
   handlePlayerAction() { }
+
+  get state(): GameState {
+    return this._state;
+  }
+
+  set state(state: GameState) {
+    this._state = state;
+    this.display.render();
+  }
 }
 
 export class GameState {

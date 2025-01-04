@@ -1,10 +1,19 @@
-import { setJoinCodeHtml, setPlayersInLobbyHtml } from "./app.js";
+import {
+  appState,
+  GameStatus,
+  renderInProgress,
+  setJoinCodeHtml,
+  setPlayersInLobbyHtml,
+} from "./app.js";
+import { GameState } from "./objects/game.js";
 
 type EventPayloads = {
   send_initialize_game: SendInitializeGameEvent;
   receive_initialize_game: ReceiveInitializeGameEvent;
   send_join_game: SendJoinGameEvent;
   receive_join_game: ReceiveJoinGameEvent;
+  send_start_game: SendStartGameEvent;
+  receive_start_game: ReceiveStartGameEvent;
 };
 
 class BaseEvent {
@@ -62,6 +71,24 @@ class ReceiveJoinGameEvent {
 
   constructor(playerCount: number, sent: string) {
     this.playerCount = playerCount;
+    this.sent = sent;
+  }
+}
+
+export class SendStartGameEvent {
+  playerID: string;
+
+  constructor(playerID: string) {
+    this.playerID = playerID;
+  }
+}
+
+class ReceiveStartGameEvent {
+  gameState: GameState;
+  sent: string;
+
+  constructor(gameState: GameState, sent: string) {
+    this.gameState = gameState;
     this.sent = sent;
   }
 }
@@ -130,6 +157,16 @@ export class WSDriver {
         );
 
         setPlayersInLobbyHtml(receiveJoinGameEvent.playerCount);
+        break;
+
+      case "receive_start_game":
+        const receiveStartGameEvent = new ReceiveStartGameEvent(
+          event.payload.gameState,
+          event.payload.sent,
+        );
+
+        appState.currentState = GameStatus.InProgress;
+        renderInProgress(appState, this, receiveStartGameEvent.gameState);
         break;
 
       default:

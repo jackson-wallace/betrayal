@@ -1,19 +1,21 @@
 package main
 
 type Player struct {
-	ID     string       `json:"id"`
-	Color  string       `json:"color"`
-	State  *PlayerState `json:"state"`
+	ID    string       `json:"id"`
+	Color string       `json:"color"`
+	State *PlayerState `json:"state"`
+
+	// Create Data transfer object (DTO) if client causes issues
 	Client *Client
 }
 
 type PlayerState struct {
-	Hearts       int   `json:"hearts"`
-	Range        int   `json:"range"`
-	ActionPoints int   `json:"actionPoints"`
-	Position     Hex   `json:"position"`
-	CellsInRange []Hex `json:"cellsInRange"`
-	CellsAtMax   []Hex `json:"cellsAtMax"`
+	Hearts          int   `json:"hearts"`
+	Range           int   `json:"range"`
+	ActionPoints    int   `json:"actionPoints"`
+	Position        Hex   `json:"position"`
+	CellsInRange    []Hex `json:"cellsInRange"`
+	CellsAtMaxRange []Hex `json:"cellsAtMaxRange"`
 }
 
 type GameState struct {
@@ -37,12 +39,12 @@ func NewPlayer(position Hex) *Player {
 
 func NewPlayerState(position Hex) *PlayerState {
 	return &PlayerState{
-		Hearts:       3,
-		Range:        1,
-		ActionPoints: 0,
-		Position:     position,
-		CellsInRange: []Hex{},
-		CellsAtMax:   []Hex{},
+		Hearts:          3,
+		Range:           1,
+		ActionPoints:    0,
+		Position:        position,
+		CellsInRange:    []Hex{},
+		CellsAtMaxRange: []Hex{},
 	}
 }
 
