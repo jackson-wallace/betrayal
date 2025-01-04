@@ -1,13 +1,12 @@
 import { Game, GameState } from "./objects/game.js";
 import { initFavicon } from "./utils/favicon.js";
 import { getPlayerID } from "./utils/player.js";
+import { WSDriver } from "./ws-driver.js";
 import {
   SendInitializeGameEvent,
   SendJoinGameEvent,
   SendStartGameEvent,
-  WSDriver,
-} from "./ws-driver.js";
-
+} from "./events.js";
 export enum GameStatus {
   StartOrJoin = "startOrJoin",
   StartGame = "startGame",
