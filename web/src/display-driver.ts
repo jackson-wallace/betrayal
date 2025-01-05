@@ -52,6 +52,7 @@ export class DisplayDriver {
       const cell = this.board.getCell(player.state.position);
       if (cell) {
         this.renderCellFill(cell, player.color);
+        this.renderPlayerHearts(cell, player.state.hearts);
       }
     }
   }
@@ -121,6 +122,43 @@ export class DisplayDriver {
       cell.y - (1 / 4) * this._cellHeight,
     );
     this.ctx.closePath();
+  }
+
+  private renderPlayerHearts(cell: Cell, hearts: number) {
+    if (hearts === 3) {
+      const leftHeart = {
+        x: cell.x - this.cellRadius / 2,
+        y: cell.y,
+      };
+      this.renderPlayerHeart(leftHeart);
+      this.renderPlayerHeart(cell);
+      const rightHeart = {
+        x: cell.x + this.cellRadius / 2,
+        y: cell.y,
+      };
+      this.renderPlayerHeart(rightHeart);
+    } else if (hearts === 2) {
+      const leftHeart = {
+        x: cell.x - this.cellRadius / 4,
+        y: cell.y,
+      };
+      this.renderPlayerHeart(leftHeart);
+      const rightHeart = {
+        x: cell.x + this.cellRadius / 4,
+        y: cell.y,
+      };
+      this.renderPlayerHeart(rightHeart);
+    } else {
+      this.renderPlayerHeart(cell);
+    }
+  }
+
+  private renderPlayerHeart(position: Cell) {
+    this.ctx.beginPath();
+    this.ctx.arc(position.x, position.y, this.cellRadius / 5, 0, 2 * Math.PI);
+    this.ctx.fillStyle = "black";
+    this.ctx.fill();
+    this.ctx.stroke();
   }
 
   handleResize() {
