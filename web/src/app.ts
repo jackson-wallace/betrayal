@@ -182,3 +182,15 @@ export function setPlayersInLobbyHtml(playerCount: number) {
     element.innerHTML = `${playerCount} player(s) in the lobby`;
   }
 }
+
+export function toast(message: string) {
+  const element = document.getElementById("toast");
+  if (element) {
+    element.innerHTML = message;
+    element.className = "show";
+    setTimeout(function() {
+      element.className = element.className.replace("show", "");
+      element.innerHTML = "";
+    }, 3000);
+  }
+}

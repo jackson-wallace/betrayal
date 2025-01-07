@@ -32,3 +32,42 @@ input {
   justify-content: center;
   height: 100%;
 }
+#toast {
+  visibility: hidden;
+  background-color: #2c2c2e;
+  color: #b3b4b6;
+  text-align: center;
+  border: 2px solid #b3b4b6;
+  padding: 14px;
+  position: fixed;
+  left: 50%;
+  top: 30px;
+  transform: translateX(-50%);
+  font-size: 14px;
+}
+
+#toast.show {
+  visibility: visible;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+@-webkit-keyframes fadein {
+  from {top: 0; opacity: 0;} 
+  to {top: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {top: 0; opacity: 0;}
+  to {top: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {top: 30px; opacity: 1;} 
+  to {top: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {top: 30px; opacity: 1;}
+  to {top: 0; opacity: 0;}
+}
