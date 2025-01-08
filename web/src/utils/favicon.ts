@@ -1,4 +1,4 @@
-export function initFavicon() {
+export function initFavicon(playerColor?: string) {
   const faviconCanvas = document.createElement("canvas");
 
   faviconCanvas.width = 32 * devicePixelRatio;
@@ -26,15 +26,23 @@ export function initFavicon() {
     }
 
     ctx.closePath();
-    ctx.fillStyle = "black";
+    ctx.fillStyle = playerColor ?? "#2C2C2E";
     ctx.fill();
-    ctx.strokeStyle = "white";
+    ctx.strokeStyle = "#B3B4B6";
     ctx.lineWidth = 2;
     ctx.stroke();
   }
 
-  const link = document.createElement("link");
-  link.rel = "icon";
-  link.href = faviconCanvas.toDataURL("image/png");
-  document.head.appendChild(link);
+  let linkElement = document.querySelector(
+    'link[rel="icon"]',
+  ) as HTMLLinkElement;
+
+  if (linkElement) {
+    linkElement.href = faviconCanvas.toDataURL("image/png");
+  } else {
+    linkElement = document.createElement("link");
+    linkElement.rel = "icon";
+    linkElement.href = faviconCanvas.toDataURL("image/png");
+    document.head.appendChild(linkElement);
+  }
 }
