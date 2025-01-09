@@ -174,7 +174,7 @@ export class WSDriver {
 
         setTimeout(() => {
           renderPlayerWin(receivePlayerWinEvent.playerColor);
-        }, 3000);
+        }, 2000);
         break;
 
       default:

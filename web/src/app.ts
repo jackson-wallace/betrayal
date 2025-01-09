@@ -95,7 +95,7 @@ function renderJoinGame(ws: WSDriver, playerID: string) {
       ws.sendEvent("send_join_game", outgoingEvent);
       element.value = "";
     } else {
-      toast("Please enter a valid code.");
+      toast("Please enter a valid code");
     }
   });
 }

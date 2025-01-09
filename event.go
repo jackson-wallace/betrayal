@@ -38,9 +38,9 @@ type ReceiveInvalidActionEvent struct {
 }
 
 type ReceivePlayerWinEvent struct {
-	GameState GameState `json:"gameState"`
+	GameState   GameState `json:"gameState"`
 	PlayerColor string    `json:"playerColor"`
-	Sent     time.Time `json:"sent"`
+	Sent        time.Time `json:"sent"`
 }
 
 type SendInitializeGameEvent struct {
@@ -119,10 +119,12 @@ func InitializeGameHandler(event Event, c *Client) error {
 	}
 
 	gameID := NewGameID()
-	joinCode := NewJoinCode(2)
+	joinCode := NewJoinCode(3)
 	game := NewGame()
+
 	game.Lock()
 	defer game.Unlock()
+
 	game.ID = gameID
 	game.JoinCode = joinCode
 	game.BoardSize = 17
@@ -213,6 +215,8 @@ func StartGameHandler(event Event, c *Client) error {
 
 	game.Lock()
 	defer game.Unlock()
+
+	game.State.Status = "in_progress"
 
 	response := ReceiveStartGameEvent{
 		GameState: *game.State,
@@ -307,9 +311,10 @@ func PlayerShootHandler(event Event, c *Client) error {
 	isWinner := game.State.CheckForWinner()
 	if isWinner {
 		response := ReceivePlayerWinEvent{
-            GameState: *game.State,
+			GameState:   *game.State,
 			PlayerColor: player.Color,
-			Sent:     time.Now(),
+			Sent:        time.Now(),
+		}
 		if err := BroadcastEvent(EventReceivePlayerWin, response, game.AllClients()); err != nil {
 			return err
 		}

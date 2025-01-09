@@ -1,5 +1,7 @@
 package main
 
+import "sync"
+
 type Player struct {
 	ID     string       `json:"id"`
 	Color  string       `json:"color"`
@@ -101,13 +103,13 @@ func (gs *GameState) GetPlayerAtCell(hex Hex) *Player {
 }
 
 func (gs *GameState) CheckForWinner() bool {
-    playerCount := 0
-    for _, player := range gs.Players {
-        if player.State != nil {
-            playerCount += 1
-        }
-    }
-    return playerCount == 1
+	playerCount := 0
+	for _, player := range gs.Players {
+		if player.State != nil {
+			playerCount += 1
+		}
+	}
+	return playerCount == 1
 }
 
 func (ps *PlayerState) IsCellInRange(hex Hex) bool {
