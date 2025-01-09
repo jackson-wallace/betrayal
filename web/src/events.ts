@@ -17,6 +17,7 @@ export type EventPayloads = {
   send_player_give_action_point: SendPlayerGiveActionPointEvent;
   receive_player_give_action_point: ReceivePlayerGiveActionPointEvent;
   receive_invalid_action: ReceiveInvalidActionEvent;
+  receive_player_win: ReceivePlayerWinEvent;
 };
 
 export class BaseEvent {
@@ -182,6 +183,18 @@ export class ReceiveInvalidActionEvent {
 
   constructor(message: string, sent: string) {
     this.message = message;
+    this.sent = sent;
+  }
+}
+
+export class ReceivePlayerWinEvent {
+  gameState: GameState;
+  playerColor: string;
+  sent: string;
+
+  constructor(gameState: GameState, playerColor: string, sent: string) {
+    this.gameState = gameState;
+    this.playerColor = playerColor;
     this.sent = sent;
   }
 }

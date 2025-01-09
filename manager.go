@@ -61,7 +61,6 @@ func (m *Manager) routeEvent(event Event, c *Client) error {
 func (m *Manager) serveWS(w http.ResponseWriter, r *http.Request) {
 	log.Println("new connection")
 
-	// upgrade regular http connection to websocket
 	conn, err := websocketUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
@@ -72,7 +71,6 @@ func (m *Manager) serveWS(w http.ResponseWriter, r *http.Request) {
 
 	m.addClient(client)
 
-	// Start client processes
 	go client.readMessages()
 	go client.writeMessages()
 }

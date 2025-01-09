@@ -29,11 +29,18 @@ const (
 	EventSendPlayerGiveActionPoint    = "send_player_give_action_point"
 	EventReceivePlayerGiveActionPoint = "receive_player_give_action_point"
 	EventReceiveInvalidAction         = "receive_invalid_action"
+	EventReceivePlayerWin             = "receive_player_win"
 )
 
 type ReceiveInvalidActionEvent struct {
-	Message string    `json:"message"`
-	Sent    time.Time `json:"sent"`
+	Message string `json:"message"`
+	Sent    time.Time
+}
+
+type ReceivePlayerWinEvent struct {
+	GameState GameState `json:"gameState"`
+	PlayerColor string    `json:"playerColor"`
+	Sent     time.Time `json:"sent"`
 }
 
 type SendInitializeGameEvent struct {
@@ -271,6 +278,16 @@ func PlayerShootHandler(event Event, c *Client) error {
 	target.State.Hearts -= 1
 	if target.State.Hearts <= 0 {
 		target.State = nil
+	}
+
+	isWinner := game.State.CheckForWinner()
+	if isWinner {
+		response := ReceivePlayerWinEvent{
+            GameState: *game.State,
+			PlayerColor: player.Color,
+			Sent:     time.Now(),
+		}
+		return BroadcastEvent(EventReceivePlayerWin, response, game.AllClients())
 	}
 
 	response := ReceivePlayerShootEvent{

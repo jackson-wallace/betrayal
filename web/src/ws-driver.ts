@@ -2,6 +2,7 @@ import {
   appState,
   GameStatus,
   renderInProgress,
+  renderPlayerWin,
   renderWaiting,
   setJoinCodeHtml,
   setPlayersInLobbyHtml,
@@ -18,6 +19,7 @@ import {
   ReceivePlayerIncreaseRangeEvent,
   ReceivePlayerMoveEvent,
   ReceivePlayerShootEvent,
+  ReceivePlayerWinEvent,
   ReceiveStartGameEvent,
 } from "./events.js";
 
@@ -157,6 +159,22 @@ export class WSDriver {
         );
 
         toast(receiveInvalidActionEvent.message);
+        break;
+
+      case "receive_player_win":
+        const receivePlayerWinEvent = new ReceivePlayerWinEvent(
+          event.payload.gameState,
+          event.payload.playerColor,
+          event.payload.sent,
+        );
+
+        if (appState.game) {
+          appState.game.state = receivePlayerWinEvent.gameState;
+        }
+
+        setTimeout(() => {
+          renderPlayerWin(receivePlayerWinEvent.playerColor);
+        }, 3000);
         break;
 
       default:

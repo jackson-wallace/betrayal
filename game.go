@@ -99,6 +99,16 @@ func (gs *GameState) GetPlayerAtCell(hex Hex) *Player {
 	return nil
 }
 
+func (gs *GameState) CheckForWinner() bool {
+    playerCount := 0
+    for _, player := range gs.Players {
+        if player.State != nil {
+            playerCount += 1
+        }
+    }
+    return playerCount == 1
+}
+
 func (ps *PlayerState) IsCellInRange(hex Hex) bool {
 	for _, cell := range ps.CellsInRange {
 		if cell == hex {
