@@ -27,6 +27,7 @@ type Game struct {
 	BoardSize  int
 	MainClient *Client
 	State      *GameState
+	sync.Mutex
 }
 
 func CreateNewPlayer(playerID string, client *Client, game *Game) (*Player, error) {

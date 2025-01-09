@@ -121,6 +121,8 @@ func InitializeGameHandler(event Event, c *Client) error {
 	gameID := NewGameID()
 	joinCode := NewJoinCode(2)
 	game := NewGame()
+	game.Lock()
+	defer game.Unlock()
 	game.ID = gameID
 	game.JoinCode = joinCode
 	game.BoardSize = 17
@@ -152,6 +154,13 @@ func JoinGameHandler(event Event, c *Client) error {
 	for _, game := range c.manager.games {
 		if payload.JoinCode != game.JoinCode {
 			continue
+		}
+
+		game.Lock()
+		defer game.Unlock()
+
+		if game.State.Status == "in_progress" {
+			return sendInvalidAction(c, "Game already started")
 		}
 
 		if len(game.State.Players) >= 8 {
@@ -201,6 +210,10 @@ func StartGameHandler(event Event, c *Client) error {
 	}
 
 	game := c.manager.games[c.GameID]
+
+	game.Lock()
+	defer game.Unlock()
+
 	response := ReceiveStartGameEvent{
 		GameState: *game.State,
 		Sent:      time.Now(),
@@ -215,6 +228,9 @@ func PlayerMoveHandler(event Event, c *Client) error {
 	}
 
 	game := c.manager.games[c.GameID]
+
+	game.Lock()
+	defer game.Unlock()
 
 	player, err := validatePlayerExists(game, payload.PlayerID)
 	if err != nil {
@@ -253,6 +269,14 @@ func PlayerShootHandler(event Event, c *Client) error {
 
 	game := c.manager.games[c.GameID]
 
+	game.Lock()
+	unlockNeeded := true
+	defer func() {
+		if unlockNeeded {
+			game.Unlock()
+		}
+	}()
+
 	player, err := validatePlayerExists(game, payload.PlayerID)
 	if err != nil {
 		return sendInvalidAction(c, err.Error())
@@ -286,8 +310,18 @@ func PlayerShootHandler(event Event, c *Client) error {
             GameState: *game.State,
 			PlayerColor: player.Color,
 			Sent:     time.Now(),
+		if err := BroadcastEvent(EventReceivePlayerWin, response, game.AllClients()); err != nil {
+			return err
 		}
-		return BroadcastEvent(EventReceivePlayerWin, response, game.AllClients())
+
+		unlockNeeded = false
+		game.Unlock()
+
+		c.manager.Lock()
+		defer c.manager.Unlock()
+		delete(c.manager.games, c.GameID)
+
+		return nil
 	}
 
 	response := ReceivePlayerShootEvent{
@@ -304,6 +338,9 @@ func PlayerIncreaseRangeHandler(event Event, c *Client) error {
 	}
 
 	game := c.manager.games[c.GameID]
+
+	game.Lock()
+	defer game.Unlock()
 
 	player, err := validatePlayerExists(game, payload.PlayerID)
 	if err != nil {
@@ -334,6 +371,9 @@ func PlayerGiveActionPointHandler(event Event, c *Client) error {
 	}
 
 	game := c.manager.games[c.GameID]
+
+	game.Lock()
+	defer game.Unlock()
 
 	player, err := validatePlayerExists(game, payload.PlayerID)
 	if err != nil {
