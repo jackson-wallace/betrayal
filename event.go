@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -15,13 +14,27 @@ type Event struct {
 type EventHandler func(event Event, c *Client) error
 
 const (
-	EventSendInitializeGame    = "send_initialize_game"
-	EventReceiveInitializeGame = "receive_initialize_game"
-	EventSendJoinGame          = "send_join_game"
-	EventReceiveJoinGame       = "receive_join_game"
-	EventSendStartGame         = "send_start_game"
-	EventReceiveStartGame      = "receive_start_game"
+	EventSendInitializeGame           = "send_initialize_game"
+	EventReceiveInitializeGame        = "receive_initialize_game"
+	EventSendJoinGame                 = "send_join_game"
+	EventReceiveJoinGame              = "receive_join_game"
+	EventSendStartGame                = "send_start_game"
+	EventReceiveStartGame             = "receive_start_game"
+	EventSendPlayerMove               = "send_player_move"
+	EventReceivePlayerMove            = "receive_player_move"
+	EventSendPlayerShoot              = "send_player_shoot"
+	EventReceivePlayerShoot           = "receive_player_shoot"
+	EventSendPlayerIncreaseRange      = "send_player_increase_range"
+	EventReceivePlayerIncreaseRange   = "receive_player_increase_range"
+	EventSendPlayerGiveActionPoint    = "send_player_give_action_point"
+	EventReceivePlayerGiveActionPoint = "receive_player_give_action_point"
+	EventReceiveInvalidAction         = "receive_invalid_action"
 )
+
+type ReceiveInvalidActionEvent struct {
+	Message string    `json:"message"`
+	Sent    time.Time `json:"sent"`
+}
 
 type SendInitializeGameEvent struct {
 	PlayerID string `json:"playerID"`
@@ -32,56 +45,6 @@ type ReceiveInitializeGameEvent struct {
 	Sent     time.Time `json:"sent"`
 }
 
-func InitializeGameHandler(event Event, c *Client) error {
-	var sendInitializeGameEvent SendInitializeGameEvent
-
-	if err := json.Unmarshal(event.Payload, &sendInitializeGameEvent); err != nil {
-		return fmt.Errorf("bad payload in request: %v", err)
-	}
-
-	var receiveInitializeGameEvent ReceiveInitializeGameEvent
-
-	newJoinCode := NewJoinCode(2)
-
-	newGameID := NewGameID()
-	newGame := NewGame()
-	newGame.ID = newGameID
-	newGame.JoinCode = newJoinCode
-	newGame.BoardSize = 17
-	newGame.MainClient = c
-
-	position := GetRandomPosition(newGame.BoardSize)
-
-	newPlayer := NewPlayer(position)
-	newPlayer.ID = sendInitializeGameEvent.PlayerID
-	newPlayer.Color = "blue"
-	newPlayer.Client = c
-	newPlayer.State.CellsInRange = AxialSpiral(position, newPlayer.State.Range)
-	newPlayer.State.CellsAtMaxRange = AxialRing(position, newPlayer.State.Range)
-	newGame.State.AddPlayer(newPlayer)
-
-	c.GameID = newGameID
-	c.manager.games[newGameID] = newGame
-
-	receiveInitializeGameEvent.JoinCode = newJoinCode
-
-	receiveInitializeGameEvent.Sent = time.Now()
-
-	data, err := json.Marshal(receiveInitializeGameEvent)
-	if err != nil {
-		return fmt.Errorf("failed to marshal broadcast message: %v", err)
-	}
-
-	outgoingEvent := Event{
-		Payload: data,
-		Type:    EventReceiveInitializeGame,
-	}
-
-	c.egress <- outgoingEvent
-
-	return nil
-}
-
 type SendJoinGameEvent struct {
 	PlayerID string    `json:"playerID"`
 	JoinCode string    `json:"joinCode"`
@@ -89,59 +52,9 @@ type SendJoinGameEvent struct {
 }
 
 type ReceiveJoinGameEvent struct {
-	PlayerCount int       `json:"playerCount"`
-	Sent        time.Time `json:"sent"`
-}
-
-func JoinGameHandler(event Event, c *Client) error {
-	var sendJoinGameEvent SendJoinGameEvent
-
-	if err := json.Unmarshal(event.Payload, &sendJoinGameEvent); err != nil {
-		return fmt.Errorf("bad payload in request: %v", err)
-	}
-
-	for gameID, game := range c.manager.games {
-		if sendJoinGameEvent.JoinCode == game.JoinCode {
-
-			// TODO
-			// make sure position isn't taken by another player
-			position := GetRandomPosition(game.BoardSize)
-
-			newPlayer := NewPlayer(position)
-			newPlayer.ID = sendJoinGameEvent.PlayerID
-			newPlayer.Color = "red"
-			newPlayer.Client = c
-			newPlayer.State.CellsInRange = AxialSpiral(position, newPlayer.State.Range)
-			newPlayer.State.CellsAtMaxRange = AxialRing(position, newPlayer.State.Range)
-
-			game.State.AddPlayer(newPlayer)
-
-			c.GameID = gameID
-
-			var receiveJoinGameEvent ReceiveJoinGameEvent
-
-			receiveJoinGameEvent.Sent = time.Now()
-			receiveJoinGameEvent.PlayerCount = len(game.State.Players)
-			fmt.Println("game.State.Players: ", game.State.Players)
-
-			data, err := json.Marshal(receiveJoinGameEvent)
-			if err != nil {
-				return fmt.Errorf("failed to marshal join message: %v", err)
-			}
-
-			outgoingEvent := Event{
-				Payload: data,
-				Type:    EventReceiveJoinGame,
-			}
-
-			game.MainClient.egress <- outgoingEvent
-
-			return nil
-
-		}
-	}
-
-	return nil
+	PlayerCount  int       `json:"playerCount"`
+	IsMainClient bool      `json:"isMainClient"`
+	Sent         time.Time `json:"sent"`
 }
 
 type SendStartGameEvent struct {
@@ -153,32 +66,346 @@ type ReceiveStartGameEvent struct {
 	Sent      time.Time `json:"sent"`
 }
 
-func StartGameHandler(event Event, c *Client) error {
-	var sendStartGameEvent SendStartGameEvent
-	if err := json.Unmarshal(event.Payload, &sendStartGameEvent); err != nil {
-		return fmt.Errorf("bad payload in request: %v", err)
+type SendPlayerMoveEvent struct {
+	PlayerID string `json:"playerID"`
+	Hex      Hex    `json:"hex"`
+}
+
+type ReceivePlayerMoveEvent struct {
+	GameState GameState `json:"gameState"`
+	Sent      time.Time `json:"sent"`
+}
+
+type SendPlayerShootEvent struct {
+	PlayerID string `json:"playerID"`
+	Hex      Hex    `json:"hex"`
+}
+
+type ReceivePlayerShootEvent struct {
+	GameState GameState `json:"gameState"`
+	Sent      time.Time `json:"sent"`
+}
+
+type SendPlayerIncreaseRangeEvent struct {
+	PlayerID string `json:"playerID"`
+}
+
+type ReceivePlayerIncreaseRangeEvent struct {
+	GameState GameState `json:"gameState"`
+	Sent      time.Time `json:"sent"`
+}
+
+type SendPlayerGiveActionPointEvent struct {
+	PlayerID string `json:"playerID"`
+	Hex      Hex    `json:"hex"`
+}
+
+type ReceivePlayerGiveActionPointEvent struct {
+	GameState GameState `json:"gameState"`
+	Sent      time.Time `json:"sent"`
+}
+
+func InitializeGameHandler(event Event, c *Client) error {
+	var payload SendInitializeGameEvent
+	if err := ParsePayload(event.Payload, &payload); err != nil {
+		return err
 	}
 
-	var receiveStartGameEvent ReceiveStartGameEvent
+	gameID := NewGameID()
+	joinCode := NewJoinCode(2)
+	game := NewGame()
+	game.ID = gameID
+	game.JoinCode = joinCode
+	game.BoardSize = 17
+	game.MainClient = c
+
+	player, err := CreateNewPlayer(payload.PlayerID, c, game)
+	if err != nil {
+		return fmt.Errorf("failed to create player: %v", err)
+	}
+	player.Color = "#264BCC"
+	game.State.AddPlayer(player)
+
+	c.GameID = gameID
+	c.manager.games[gameID] = game
+
+	response := ReceiveInitializeGameEvent{
+		JoinCode: joinCode,
+		Sent:     time.Now(),
+	}
+	return BroadcastEvent(EventReceiveInitializeGame, response, []*Client{c})
+}
+
+func JoinGameHandler(event Event, c *Client) error {
+	var payload SendJoinGameEvent
+	if err := ParsePayload(event.Payload, &payload); err != nil {
+		return err
+	}
+
+	for _, game := range c.manager.games {
+		if payload.JoinCode != game.JoinCode {
+			continue
+		}
+
+		if len(game.State.Players) >= 8 {
+			return sendInvalidAction(c, "Lobby full")
+		}
+
+		player, err := CreateNewPlayer(payload.PlayerID, c, game)
+		if err != nil {
+			return fmt.Errorf("failed to create player: %v", err)
+		}
+		player.Color = GetPlayerColor(len(game.State.Players) - 1)
+		game.State.AddPlayer(player)
+
+		c.GameID = game.ID
+
+		for _, recipient := range game.AllClients() {
+			response := ReceiveJoinGameEvent{
+				PlayerCount:  len(game.State.Players),
+				IsMainClient: recipient == game.MainClient,
+				Sent:         time.Now(),
+			}
+			err := BroadcastEvent(EventReceiveJoinGame, response, []*Client{recipient})
+			if err != nil {
+				return fmt.Errorf("failed to broadcast event to client %v: %v", recipient, err)
+			}
+		}
+
+		return nil
+	}
+
+	response := ReceiveInvalidActionEvent{
+		Message: "Join code not found",
+		Sent:    time.Now(),
+	}
+	return BroadcastEvent(EventReceiveInvalidAction, response, []*Client{c})
+}
+
+func GetPlayerColor(playerIndex int) string {
+	colors := []string{"#E40027", "#FF9526", "#F8D034", "#2AA146", "lightblue", "indigo", "violet"}
+	return colors[playerIndex%len(colors)]
+}
+
+func StartGameHandler(event Event, c *Client) error {
+	var payload SendStartGameEvent
+	if err := ParsePayload(event.Payload, &payload); err != nil {
+		return err
+	}
+
+	game := c.manager.games[c.GameID]
+	response := ReceiveStartGameEvent{
+		GameState: *game.State,
+		Sent:      time.Now(),
+	}
+	return BroadcastEvent(EventReceiveStartGame, response, game.AllClients())
+}
+
+func PlayerMoveHandler(event Event, c *Client) error {
+	var payload SendPlayerMoveEvent
+	if err := ParsePayload(event.Payload, &payload); err != nil {
+		return err
+	}
 
 	game := c.manager.games[c.GameID]
 
-	receiveStartGameEvent.GameState = *game.State
-	receiveStartGameEvent.Sent = time.Now()
-
-	data, err := json.Marshal(receiveStartGameEvent)
+	player, err := validatePlayerExists(game, payload.PlayerID)
 	if err != nil {
-		log.Printf("Error marshalling GameState: %v", err)
+		return sendInvalidAction(c, err.Error())
 	}
 
-	outgoingEvent := Event{
-		Payload: data,
-		Type:    EventReceiveStartGame,
+	if err := validateActionPoints(player); err != nil {
+		return sendInvalidAction(c, err.Error())
 	}
 
-	for _, player := range game.State.Players {
-		player.Client.egress <- outgoingEvent
+	if err := validateCellInRange(player, payload.Hex); err != nil {
+		return sendInvalidAction(c, err.Error())
 	}
 
+	if err := validateCellOccupied(game, payload.Hex, false); err != nil {
+		return sendInvalidAction(c, err.Error())
+	}
+
+	player.State.ActionPoints -= 1
+	player.State.Position = payload.Hex
+	player.State.CellsInRange = AxialSpiral(game.BoardSize, payload.Hex, player.State.Range)
+	player.State.CellsAtMaxRange = AxialRing(game.BoardSize, payload.Hex, player.State.Range)
+
+	response := ReceivePlayerMoveEvent{
+		GameState: *game.State,
+		Sent:      time.Now(),
+	}
+	return BroadcastEvent(EventReceivePlayerMove, response, game.AllClients())
+}
+
+func PlayerShootHandler(event Event, c *Client) error {
+	var payload SendPlayerShootEvent
+	if err := ParsePayload(event.Payload, &payload); err != nil {
+		return err
+	}
+
+	game := c.manager.games[c.GameID]
+
+	player, err := validatePlayerExists(game, payload.PlayerID)
+	if err != nil {
+		return sendInvalidAction(c, err.Error())
+	}
+
+	if err := validateActionPoints(player); err != nil {
+		return sendInvalidAction(c, err.Error())
+	}
+
+	if err := validateCellInRange(player, payload.Hex); err != nil {
+		return sendInvalidAction(c, err.Error())
+	}
+
+	target := game.State.GetPlayerAtCell(payload.Hex)
+	if target == nil {
+		return sendInvalidAction(c, "Position not occupied")
+	}
+	if target == player {
+		return sendInvalidAction(c, "Can't shoot yourself")
+	}
+
+	player.State.ActionPoints -= 1
+	target.State.Hearts -= 1
+	if target.State.Hearts <= 0 {
+		target.State = nil
+	}
+
+	response := ReceivePlayerShootEvent{
+		GameState: *game.State,
+		Sent:      time.Now(),
+	}
+	return BroadcastEvent(EventReceivePlayerShoot, response, game.AllClients())
+}
+
+func PlayerIncreaseRangeHandler(event Event, c *Client) error {
+	var payload SendPlayerIncreaseRangeEvent
+	if err := ParsePayload(event.Payload, &payload); err != nil {
+		return err
+	}
+
+	game := c.manager.games[c.GameID]
+
+	player, err := validatePlayerExists(game, payload.PlayerID)
+	if err != nil {
+		return sendInvalidAction(c, err.Error())
+	}
+
+	if player.State.ActionPoints < player.State.Range+1 {
+		return sendInvalidAction(c, "Not enough action points")
+	}
+
+	player.State.Range += 1
+	player.State.ActionPoints -= player.State.Range
+	player.State.CellsInRange = AxialSpiral(game.BoardSize, player.State.Position, player.State.Range)
+	player.State.CellsAtMaxRange = AxialRing(game.BoardSize, player.State.Position, player.State.Range)
+
+	response := ReceivePlayerIncreaseRangeEvent{
+		GameState: *game.State,
+		Sent:      time.Now(),
+	}
+
+	return BroadcastEvent(EventReceivePlayerIncreaseRange, response, game.AllClients())
+}
+
+func PlayerGiveActionPointHandler(event Event, c *Client) error {
+	var payload SendPlayerGiveActionPointEvent
+	if err := ParsePayload(event.Payload, &payload); err != nil {
+		return err
+	}
+
+	game := c.manager.games[c.GameID]
+
+	player, err := validatePlayerExists(game, payload.PlayerID)
+	if err != nil {
+		return sendInvalidAction(c, err.Error())
+	}
+
+	if err := validateActionPoints(player); err != nil {
+		return sendInvalidAction(c, err.Error())
+	}
+
+	if err := validateCellInRange(player, payload.Hex); err != nil {
+		return sendInvalidAction(c, err.Error())
+	}
+
+	target := game.State.GetPlayerAtCell(payload.Hex)
+	if target == nil {
+		return sendInvalidAction(c, "Position not occupied")
+	}
+	if target == player {
+		return sendInvalidAction(c, "Can't give to yourself")
+	}
+
+	player.State.ActionPoints -= 1
+	target.State.ActionPoints += 1
+
+	response := ReceivePlayerGiveActionPointEvent{
+		GameState: *game.State,
+		Sent:      time.Now(),
+	}
+	return BroadcastEvent(EventReceivePlayerGiveActionPoint, response, game.AllClients())
+
+}
+
+func ParsePayload[T any](payload []byte, target *T) error {
+	if err := json.Unmarshal(payload, target); err != nil {
+		return fmt.Errorf("bad payload in request: %v", err)
+	}
+	return nil
+}
+
+func validatePlayerExists(game *Game, playerID string) (*Player, error) {
+	player, exists := game.State.Players[playerID]
+	if !exists {
+		return nil, fmt.Errorf("player %s not found in game", playerID)
+	}
+	return player, nil
+}
+
+func validateActionPoints(player *Player) error {
+	if player.State.ActionPoints == 0 {
+		return fmt.Errorf("Not enough action points")
+	}
+	return nil
+}
+
+func validateCellInRange(player *Player, hex Hex) error {
+	if !player.State.IsCellInRange(hex) {
+		return fmt.Errorf("Position out of range")
+	}
+	return nil
+}
+
+func validateCellOccupied(game *Game, hex Hex, expectOccupied bool) error {
+	playerAtCell := game.State.GetPlayerAtCell(hex)
+	if expectOccupied && playerAtCell == nil {
+		return fmt.Errorf("Position not occupied")
+	}
+	if !expectOccupied && playerAtCell != nil {
+		return fmt.Errorf("Position occupied")
+	}
+	return nil
+}
+
+func sendInvalidAction(c *Client, message string) error {
+	response := ReceiveInvalidActionEvent{
+		Message: message,
+		Sent:    time.Now(),
+	}
+	return BroadcastEvent(EventReceiveInvalidAction, response, []*Client{c})
+}
+
+func BroadcastEvent(eventType string, payload any, clients []*Client) error {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal %s event: %v", eventType, err)
+	}
+	outgoingEvent := Event{Type: eventType, Payload: data}
+	for _, client := range clients {
+		client.egress <- outgoingEvent
+	}
 	return nil
 }

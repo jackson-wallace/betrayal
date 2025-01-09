@@ -41,6 +41,10 @@ func (m *Manager) setupEventHandlers() {
 	m.handlers[EventSendInitializeGame] = InitializeGameHandler
 	m.handlers[EventSendJoinGame] = JoinGameHandler
 	m.handlers[EventSendStartGame] = StartGameHandler
+	m.handlers[EventSendPlayerMove] = PlayerMoveHandler
+	m.handlers[EventSendPlayerShoot] = PlayerShootHandler
+	m.handlers[EventSendPlayerIncreaseRange] = PlayerIncreaseRangeHandler
+	m.handlers[EventSendPlayerGiveActionPoint] = PlayerGiveActionPointHandler
 }
 
 func (m *Manager) routeEvent(event Event, c *Client) error {

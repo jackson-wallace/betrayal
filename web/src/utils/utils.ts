@@ -151,3 +151,23 @@ export function calculateCellRadius(
 
   return cellRadius / 1.9;
 }
+
+export function isHexOnBoard(hex: Hex, boardSize: number) {
+  const lowerBound = Math.floor(boardSize / 2);
+  const upperBound = boardSize + lowerBound - 1;
+
+  const hexSum = hex.r + hex.q;
+  if (hexSum < lowerBound || hexSum > upperBound) {
+    return false;
+  }
+
+  if (hex.r < 0 || hex.r > boardSize - 1) {
+    return false;
+  }
+
+  if (hex.q < 0 || hex.q > boardSize - 1) {
+    return false;
+  }
+
+  return true;
+}

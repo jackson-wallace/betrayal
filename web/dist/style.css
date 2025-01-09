@@ -1,15 +1,21 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  background-color: #000000;
+  font-family: "JetBrains Mono", monospace;
+  background-color: #2c2c2e;
 }
 
 html,
 body {
-  font-family: "JetBrains Mono", monospace;
   height: 100%;
   margin: 0;
   overflow: hidden;
-  color: white;
+  color: #b3b4b6;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: none;
 }
 
 button {
@@ -32,6 +38,72 @@ input {
   justify-content: center;
   height: 100%;
 }
+
+.custom-button {
+  background-color: #2c2c2e;
+  color: #b3b4b6;
+  border: 2px solid #b3b4b6;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.custom-button:hover {
+  background-color: #b3b4b6;
+  color: #2c2c2e;
+}
+
+.join-input {
+  text-align: center;
+  background-color: #2c2c2e;
+  color: #b3b4b6;
+  border: 2px solid #b3b4b6;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  caret-color: #b3b4b6;
+}
+
+#game-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#board {
+  height: calc(100% - 100px);
+  width: 100%;
+}
+
+#input-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+}
+
+.hud {
+  display: flex;
+  align-items: center;
+  max-width: 472px; 
+  width: 100%;
+  margin: 0 auto;
+  justify-content: space-between;
+}
+
+#input-form form {
+  max-width: 472px;
+  display: flex;
+  justify-content: space-around;
+  gap: 8px;
+}
+
 #toast {
   visibility: hidden;
   background-color: #2c2c2e;
@@ -48,8 +120,8 @@ input {
 
 #toast.show {
   visibility: visible;
-  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
-  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 1.5s;
+  animation: fadein 0.5s, fadeout 0.5s 1.5s;
 }
 
 @-webkit-keyframes fadein {

@@ -2,15 +2,22 @@ import {
   appState,
   GameStatus,
   renderInProgress,
+  renderWaiting,
   setJoinCodeHtml,
   setPlayersInLobbyHtml,
+  toast,
 } from "./app.js";
 import {
   BaseEvent,
   Event,
   EventPayloads,
   ReceiveInitializeGameEvent,
+  ReceiveInvalidActionEvent,
   ReceiveJoinGameEvent,
+  ReceivePlayerGiveActionPointEvent,
+  ReceivePlayerIncreaseRangeEvent,
+  ReceivePlayerMoveEvent,
+  ReceivePlayerShootEvent,
   ReceiveStartGameEvent,
 } from "./events.js";
 
@@ -25,7 +32,6 @@ export class WSDriver {
     if (window["WebSocket"]) {
       console.log("supports websockets");
 
-      // connect to ws
       this.conn = new WebSocket("wss://" + document.location.host + "/ws");
 
       this.conn.onopen = () => this.handleOpen();
@@ -74,10 +80,17 @@ export class WSDriver {
       case "receive_join_game":
         const receiveJoinGameEvent = new ReceiveJoinGameEvent(
           event.payload.playerCount,
+          event.payload.isMainClient,
           event.payload.sent,
         );
 
-        setPlayersInLobbyHtml(receiveJoinGameEvent.playerCount);
+        if (receiveJoinGameEvent.isMainClient) {
+          setPlayersInLobbyHtml(receiveJoinGameEvent.playerCount);
+        } else {
+          renderWaiting();
+          setPlayersInLobbyHtml(receiveJoinGameEvent.playerCount);
+        }
+
         break;
 
       case "receive_start_game":
@@ -88,6 +101,62 @@ export class WSDriver {
 
         appState.currentState = GameStatus.InProgress;
         renderInProgress(appState, this, receiveStartGameEvent.gameState);
+        break;
+
+      case "receive_player_move":
+        const receivePlayerMoveEvent = new ReceivePlayerMoveEvent(
+          event.payload.gameState,
+          event.payload.sent,
+        );
+
+        if (appState.game) {
+          appState.game.state = receivePlayerMoveEvent.gameState;
+        }
+
+        break;
+
+      case "receive_player_shoot":
+        const receivePlayerShootEvent = new ReceivePlayerShootEvent(
+          event.payload.gameState,
+          event.payload.sent,
+        );
+
+        if (appState.game) {
+          appState.game.state = receivePlayerShootEvent.gameState;
+        }
+        break;
+
+      case "receive_player_increase_range":
+        const receivePlayerIncreaseRangeEvent =
+          new ReceivePlayerIncreaseRangeEvent(
+            event.payload.gameState,
+            event.payload.sent,
+          );
+
+        if (appState.game) {
+          appState.game.state = receivePlayerIncreaseRangeEvent.gameState;
+        }
+        break;
+
+      case "receive_player_give_action_point":
+        const receivePlayerGiveActionPointEvent =
+          new ReceivePlayerGiveActionPointEvent(
+            event.payload.gameState,
+            event.payload.sent,
+          );
+
+        if (appState.game) {
+          appState.game.state = receivePlayerGiveActionPointEvent.gameState;
+        }
+        break;
+
+      case "receive_invalid_action":
+        const receiveInvalidActionEvent = new ReceiveInvalidActionEvent(
+          event.payload.message,
+          event.payload.sent,
+        );
+
+        toast(receiveInvalidActionEvent.message);
         break;
 
       default:

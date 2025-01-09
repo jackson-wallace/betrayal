@@ -1,4 +1,4 @@
-import { Game, GameState } from "./objects/game.js";
+import { Game, GameState } from "./game/game.js";
 import { initFavicon } from "./utils/favicon.js";
 import { getPlayerID } from "./utils/player.js";
 import { WSDriver } from "./ws-driver.js";
@@ -36,10 +36,10 @@ function renderStartOrJoin(appState: AppState, ws: WSDriver, playerID: string) {
   const app = document.querySelector<HTMLDivElement>("#app")!;
   app.innerHTML = `
     <div class="center">
-      <h1>War Game</h1>
-      <button id="new-game">New Game</button>
+      <h1>Betrayal</h1>
+      <button class="custom-button" id="new-game">New Game</button>
       <br />
-      <button id="join-game">Join Game</button>
+      <button class="custom-button" id="join-game">Join Game</button>
     </div>
   `;
 
@@ -63,7 +63,7 @@ function renderStartGame(appState: AppState, ws: WSDriver, playerID: string) {
       <h3 id="join-code">Join code: ____</h3>
       <p id="players-in-lobby">0 player(s) in the lobby</p>
       <br />
-      <button id="start-btn">Start game</button>
+      <button class="custom-button" id="start-btn">Start game</button>
     </div>
   `;
 
@@ -75,38 +75,37 @@ function renderStartGame(appState: AppState, ws: WSDriver, playerID: string) {
   });
 }
 
-function renderJoinGame(appState: AppState, ws: WSDriver, playerID: string) {
+function renderJoinGame(ws: WSDriver, playerID: string) {
   const app = document.querySelector<HTMLDivElement>("#app")!;
   app.innerHTML = `
     <div class="center">
       <label>Enter join code</label>
       <br />
-      <input id="join-code" type="text"></input>
+      <input class="join-input" id="join-code" type="text" autofocus></input>
       <br />
-      <button id="join-btn">Join</button>
+      <button class="custom-button" id="join-btn">Join</button>
     </div>
   `;
 
   document.getElementById("join-btn")!.addEventListener("click", () => {
-    const code = (document.getElementById("join-code") as HTMLInputElement)
-      .value;
+    const element = document.getElementById("join-code") as HTMLInputElement;
+    const code = element.value;
     if (code) {
       const outgoingEvent = new SendJoinGameEvent(playerID, code.toLowerCase());
       ws.sendEvent("send_join_game", outgoingEvent);
-
-      appState.currentState = GameStatus.Waiting;
-      renderApp(appState, ws, playerID);
+      element.value = "";
     } else {
-      alert("Please enter a valid code.");
+      toast("Please enter a valid code.");
     }
   });
 }
 
-function renderWaiting() {
+export function renderWaiting() {
   const app = document.querySelector<HTMLDivElement>("#app")!;
   app.innerHTML = `
     <div class="center">
       <h3>Waiting for game to start...</h3>
+      <p id="players-in-lobby">0 player(s) in the lobby</p>
     </div>
   `;
 }
@@ -117,19 +116,33 @@ export function renderInProgress(
   gameState: GameState,
 ) {
   const app = document.querySelector<HTMLDivElement>("#app")!;
+
   app.innerHTML = `
-    <canvas id="board">Game Board</canvas>
+    <div id="game-container">
+      <canvas id="board">Game Board</canvas>
+      <div id="input-form">
+        <div class="hud">
+          <p id="action-points">Action Points: 1</p>
+          <p id="color">██████</p>
+          <p id="clock">01:59</p>
+        </div>
+        <form>
+          <button class="custom-button" type="button" id="move-btn">Move</button>
+          <button class="custom-button" type="button" id="shoot-btn">Shoot</button>
+          <button class="custom-button" type="button" id="increase-range-btn">Increase Range</button>
+          <button class="custom-button" type="button" id="give-ap-btn">Give Action Point</button>
+        </form>
+      </div>
+    </div>
   `;
 
   const canvas = document.getElementById("board") as HTMLCanvasElement;
   const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
-  canvas.width = window.innerWidth * devicePixelRatio;
-  canvas.height = window.innerHeight * devicePixelRatio;
+  canvas.width = canvas.clientWidth * devicePixelRatio;
+  canvas.height = canvas.clientHeight * devicePixelRatio;
 
   ctx.scale(devicePixelRatio, devicePixelRatio);
-  canvas.style.width = `${window.innerWidth}px`;
-  canvas.style.height = `${window.innerHeight}px`;
 
   appState.game = new Game(canvas, ws, playerID, gameState);
 
@@ -139,9 +152,35 @@ export function renderInProgress(
     }
   });
 
-  addEventListener("click", (event) => {
+  document.getElementById("board")!.addEventListener("click", (event) => {
     if (appState.game) {
-      appState.game.handleClick(event);
+      appState.game.handleBoardClick(event);
+    }
+  });
+
+  document.getElementById("move-btn")!.addEventListener("click", () => {
+    if (appState.game) {
+      appState.game.handlePlayerMove();
+    }
+  });
+
+  document.getElementById("shoot-btn")!.addEventListener("click", () => {
+    if (appState.game) {
+      appState.game.handlePlayerShoot();
+    }
+  });
+
+  document
+    .getElementById("increase-range-btn")!
+    .addEventListener("click", () => {
+      if (appState.game) {
+        appState.game.handlePlayerIncreaseRange();
+      }
+    });
+
+  document.getElementById("give-ap-btn")!.addEventListener("click", () => {
+    if (appState.game) {
+      appState.game.handlePlayerGiveActionPoint();
     }
   });
 }
@@ -155,7 +194,7 @@ function renderApp(appState: AppState, ws: WSDriver, playerID: string) {
       renderStartGame(appState, ws, playerID);
       break;
     case GameStatus.JoinGame:
-      renderJoinGame(appState, ws, playerID);
+      renderJoinGame(ws, playerID);
       break;
     case GameStatus.Waiting:
       renderWaiting();
@@ -183,6 +222,13 @@ export function setPlayersInLobbyHtml(playerCount: number) {
   }
 }
 
+export function setActionPointsHtml(actionPoints: string) {
+  const element = document.getElementById("action-points");
+  if (element) {
+    element.innerHTML = `Action Points: ${actionPoints}`;
+  }
+}
+
 export function toast(message: string) {
   const element = document.getElementById("toast");
   if (element) {
@@ -191,6 +237,15 @@ export function toast(message: string) {
     setTimeout(function() {
       element.className = element.className.replace("show", "");
       element.innerHTML = "";
-    }, 3000);
+    }, 2000);
+  }
+}
+
+export function setBlockColor(color: string): void {
+  const colorElement = document.getElementById("color");
+  if (colorElement) {
+    colorElement.style.color = color;
+  } else {
+    console.error("Element with id 'color' not found.");
   }
 }

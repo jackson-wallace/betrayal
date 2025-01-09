@@ -82,23 +82,29 @@ func AxialScale(hex Hex, factor int) Hex {
 	return Hex{R: hex.R * factor, Q: hex.Q * factor}
 }
 
-func AxialRing(center Hex, radius int) []Hex {
+func AxialRing(boardSize int, center Hex, radius int) []Hex {
+	// lowerBound := boardSize / 2
+	// upperBound := (boardSize-1)*2 - lowerBound
+
 	var results []Hex
 	hex := AxialAdd(center, AxialScale(AxialDirection(4), radius))
 	for i := 0; i < 6; i++ {
 		for j := 0; j < radius; j++ {
-			results = append(results, hex)
+			if isHexOnBoard(hex, boardSize) {
+				results = append(results, hex)
+			}
 			hex = AxialNeighbor(hex, i)
 		}
 	}
 	return results
 }
 
-func AxialSpiral(center Hex, radius int) []Hex {
+func AxialSpiral(boardSize int, center Hex, radius int) []Hex {
 	var results []Hex
 	for i := 1; i <= radius; i++ {
-		results = append(results, AxialRing(center, i)...)
+		results = append(results, AxialRing(boardSize, center, i)...)
 	}
+    results = append(results, center)
 	return results
 }
 
@@ -112,6 +118,7 @@ func NewJoinCode(length int) string {
 	if _, err := rand.Read(bytes); err != nil {
 		log.Println("Failed to generate join code")
 	}
+
 	return hex.EncodeToString(bytes)
 }
 
@@ -121,18 +128,47 @@ func getRandomInt(min, max int) int {
 	return rng.Intn(max-min) + min
 }
 
-func GetRandomPosition(boardSize int) Hex {
-	lowerBound := boardSize / 2
-	upperBound := (boardSize-1)*2 - lowerBound
-
+func GetRandomPosition(boardSize int, players map[string]*Player) Hex {
 	var r, q int
+	var hex Hex
 	for {
 		r = getRandomInt(0, boardSize)
 		q = getRandomInt(0, boardSize)
-		if r+q >= lowerBound && r+q <= upperBound {
+		hex = Hex{R: r, Q: q}
+
+		if isHexOnBoard(hex, boardSize) && !IsPositionOccupied(hex, players) {
 			break
 		}
 	}
 
 	return Hex{R: r, Q: q}
+}
+
+func IsPositionOccupied(hex Hex, players map[string]*Player) bool {
+	for _, player := range players {
+		if player.State.Position == hex {
+			return true
+		}
+	}
+	return false
+}
+
+func isHexOnBoard(hex Hex, boardSize int) bool {
+	lowerBound := boardSize / 2
+	upperBound := boardSize + lowerBound - 1
+
+	hexSum := hex.R + hex.Q
+	if hexSum < lowerBound || hexSum > upperBound {
+		return false
+	}
+
+	if hex.R < 0 || hex.R > boardSize-1 {
+		return false
+	}
+
+	if hex.Q < 0 || hex.Q > boardSize-1 {
+		return false
+	}
+
+	return true
 }

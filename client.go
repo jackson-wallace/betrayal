@@ -14,20 +14,12 @@ var (
 	pingInterval = (pongWait * 9) / 10
 )
 
-// client has GameID property
-// server verifies client action based on server game state
-// server sends update state message to all clients in the game
-
-// Client is connected to Player by ID property
-// Manager stores a map of GameID to Game
-
 type ClientList map[*Client]bool
 
 type Client struct {
 	connection *websocket.Conn
 	manager    *Manager
 
-	// chatroom string
 	GameID string
 
 	egress chan Event
@@ -104,10 +96,10 @@ func (c *Client) writeMessages() {
 			if err := c.connection.WriteMessage(websocket.TextMessage, data); err != nil {
 				log.Printf("failed to send message: %v", err)
 			}
-			log.Println("message sent")
+			log.Printf("message sent: %v", string(data))
 
 		case <-ticker.C:
-			log.Println("ping")
+			// log.Println("ping")
 
 			// Send a ping message
 			if err := c.connection.WriteMessage(websocket.PingMessage, []byte(``)); err != nil {
@@ -119,6 +111,6 @@ func (c *Client) writeMessages() {
 }
 
 func (c *Client) pongHandler(pongMsg string) error {
-	log.Println("pong")
+	// log.Println("pong")
 	return c.connection.SetReadDeadline(time.Now().Add(pongWait))
 }

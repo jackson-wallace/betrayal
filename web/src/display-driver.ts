@@ -1,6 +1,6 @@
-import { Board, Cell } from "./objects/board.js";
-import { GameState } from "./objects/game.js";
-import { Player } from "./objects/player.js";
+import { Board, Cell } from "./game/board.js";
+import { GameState } from "./game/game.js";
+import { Player } from "./game/player.js";
 import { calculateCellRadius, hexToPixelCoordinates } from "./utils/utils.js";
 
 export class DisplayDriver {
@@ -34,6 +34,16 @@ export class DisplayDriver {
     this.renderBoard();
     this.renderPlayerRanges();
     this.renderPlayers();
+    this.renderSelectedCell();
+  }
+
+  private renderSelectedCell() {
+    if (this.gameState.selectedCell) {
+      const cell = this.board.getCell(this.gameState.selectedCell);
+      if (cell) {
+        this.renderCellOutline(cell, 2, true, "white");
+      }
+    }
   }
 
   private renderBoard() {
@@ -49,41 +59,38 @@ export class DisplayDriver {
 
   private renderPlayers() {
     for (let player of Object.values(this.gameState.players)) {
-      const cell = this.board.getCell(player.state.position);
-      if (cell) {
-        this.renderCellFill(cell, player.color);
-        this.renderPlayerHearts(cell, player.state.hearts);
+      if (player.state) {
+        const cell = this.board.getCell(player.state.position);
+        if (cell) {
+          this.renderCellFill(cell, player.color);
+          this.renderPlayerHearts(cell, player.state.hearts);
+          this.renderCellOutline(cell);
+        }
       }
     }
   }
 
   private renderPlayerRanges() {
     for (let player of Object.values(this.gameState.players)) {
-      const cell = this.board.getCell(player.state.position);
-      if (cell) {
-        this.renderPlayerRange(player);
+      if (player.state) {
+        const cell = this.board.getCell(player.state.position);
+        if (cell) {
+          this.renderPlayerRange(player);
+        }
       }
     }
   }
 
   private renderPlayerRange(player: Player) {
-    this.ctx.beginPath();
-
-    for (let i = 0; i < player.state.cellsAtMaxRange.length; i++) {
-      const hex = player.state.cellsAtMaxRange[i];
+    for (let i = 0; i < player.state.cellsInRange.length; i++) {
+      const hex = player.state.cellsInRange[i];
       const cell = this.board.getCell(hex);
 
-      if (cell && i === 0) {
-        this.ctx.moveTo(cell.x, cell.y);
-      } else if (cell) {
-        this.ctx.lineTo(cell.x, cell.y);
+      if (cell) {
+        this.renderCellFill(cell, player.color + "33");
+        this.renderCellOutline(cell);
       }
     }
-
-    this.ctx.closePath();
-
-    this.ctx.strokeStyle = player.color;
-    this.ctx.stroke();
   }
 
   private renderCellFill(cell: Cell, color: string) {
@@ -95,9 +102,20 @@ export class DisplayDriver {
     this.ctx.stroke();
   }
 
-  private renderCellOutline(cell: Cell, color?: string) {
+  private renderCellOutline(
+    cell: Cell,
+    lineWidth?: number,
+    dashed?: boolean,
+    color?: string,
+  ) {
+    if (dashed) {
+      this.ctx.setLineDash([this.cellRadius / 4, this.cellRadius / 4]);
+    } else {
+      this.ctx.setLineDash([]);
+    }
     this.createHexagonPath(cell);
-    this.ctx.strokeStyle = color ?? "rgb(255, 255, 255)";
+    this.ctx.strokeStyle = color ?? "#B3B4B6";
+    this.ctx.lineWidth = lineWidth ?? 1;
     this.ctx.stroke();
   }
 
@@ -156,19 +174,16 @@ export class DisplayDriver {
   private renderPlayerHeart(position: Cell) {
     this.ctx.beginPath();
     this.ctx.arc(position.x, position.y, this.cellRadius / 5, 0, 2 * Math.PI);
-    this.ctx.fillStyle = "black";
+    this.ctx.fillStyle = "#2C2C2E";
     this.ctx.fill();
     this.ctx.stroke();
   }
 
   handleResize() {
-    this.canvas.width = window.innerWidth * devicePixelRatio;
-    this.canvas.height = window.innerHeight * devicePixelRatio;
+    this.canvas.width = this.canvas.clientWidth * devicePixelRatio;
+    this.canvas.height = this.canvas.clientHeight * devicePixelRatio;
 
     this.ctx.scale(devicePixelRatio, devicePixelRatio);
-
-    this.canvas.style.width = window.innerWidth + "px";
-    this.canvas.style.height = window.innerHeight + "px";
 
     const newCellRadius = calculateCellRadius(
       this.canvas.height,

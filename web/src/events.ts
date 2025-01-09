@@ -1,4 +1,5 @@
-import { GameState } from "./objects/game";
+import { GameState } from "./game/game.js";
+import { Hex } from "./utils/utils.js";
 
 export type EventPayloads = {
   send_initialize_game: SendInitializeGameEvent;
@@ -7,6 +8,15 @@ export type EventPayloads = {
   receive_join_game: ReceiveJoinGameEvent;
   send_start_game: SendStartGameEvent;
   receive_start_game: ReceiveStartGameEvent;
+  send_player_move: SendPlayerMoveEvent;
+  receive_player_move: ReceivePlayerMoveEvent;
+  send_player_shoot: SendPlayerShootEvent;
+  receive_player_shoot: ReceivePlayerShootEvent;
+  send_player_increase_range: SendPlayerIncreaseRangeEvent;
+  receive_player_increase_range: ReceivePlayerIncreaseRangeEvent;
+  send_player_give_action_point: SendPlayerGiveActionPointEvent;
+  receive_player_give_action_point: ReceivePlayerGiveActionPointEvent;
+  receive_invalid_action: ReceiveInvalidActionEvent;
 };
 
 export class BaseEvent {
@@ -60,10 +70,12 @@ export class SendJoinGameEvent {
 
 export class ReceiveJoinGameEvent {
   playerCount: number;
+  isMainClient: boolean;
   sent: string;
 
-  constructor(playerCount: number, sent: string) {
+  constructor(playerCount: number, isMainClient: boolean, sent: string) {
     this.playerCount = playerCount;
+    this.isMainClient = isMainClient;
     this.sent = sent;
   }
 }
@@ -82,6 +94,94 @@ export class ReceiveStartGameEvent {
 
   constructor(gameState: GameState, sent: string) {
     this.gameState = gameState;
+    this.sent = sent;
+  }
+}
+
+export class SendPlayerMoveEvent {
+  playerID: string;
+  hex: Hex;
+
+  constructor(playerID: string, hex: Hex) {
+    this.playerID = playerID;
+    this.hex = hex;
+  }
+}
+
+export class ReceivePlayerMoveEvent {
+  gameState: GameState;
+  sent: string;
+
+  constructor(gameState: GameState, sent: string) {
+    this.gameState = gameState;
+    this.sent = sent;
+  }
+}
+
+export class SendPlayerShootEvent {
+  playerID: string;
+  hex: Hex;
+
+  constructor(playerID: string, hex: Hex) {
+    this.playerID = playerID;
+    this.hex = hex;
+  }
+}
+
+export class ReceivePlayerShootEvent {
+  gameState: GameState;
+  sent: string;
+
+  constructor(gameState: GameState, sent: string) {
+    this.gameState = gameState;
+    this.sent = sent;
+  }
+}
+
+export class SendPlayerIncreaseRangeEvent {
+  playerID: string;
+
+  constructor(playerID: string) {
+    this.playerID = playerID;
+  }
+}
+
+export class ReceivePlayerIncreaseRangeEvent {
+  gameState: GameState;
+  sent: string;
+
+  constructor(gameState: GameState, sent: string) {
+    this.gameState = gameState;
+    this.sent = sent;
+  }
+}
+
+export class SendPlayerGiveActionPointEvent {
+  playerID: string;
+  hex: Hex;
+
+  constructor(playerID: string, hex: Hex) {
+    this.playerID = playerID;
+    this.hex = hex;
+  }
+}
+
+export class ReceivePlayerGiveActionPointEvent {
+  gameState: GameState;
+  sent: string;
+
+  constructor(gameState: GameState, sent: string) {
+    this.gameState = gameState;
+    this.sent = sent;
+  }
+}
+
+export class ReceiveInvalidActionEvent {
+  message: string;
+  sent: string;
+
+  constructor(message: string, sent: string) {
+    this.message = message;
     this.sent = sent;
   }
 }
