@@ -92,6 +92,17 @@ func (m *Manager) removeClient(client *Client) {
 	}
 }
 
+func (m *Manager) RemoveGame(gameID string) {
+	m.Lock()
+	defer m.Unlock()
+
+	game, exists := m.games[gameID]
+	if exists {
+		game.Cleanup()
+		delete(m.games, gameID)
+	}
+}
+
 func checkOrigin(r *http.Request) bool {
 	origin := r.Header.Get("Origin")
 	switch origin {

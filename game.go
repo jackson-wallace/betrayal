@@ -120,3 +120,26 @@ func (ps *PlayerState) IsCellInRange(hex Hex) bool {
 	}
 	return false
 }
+
+func (game *Game) Cleanup() {
+	game.Lock()
+	defer game.Unlock()
+
+	if game.State == nil {
+		return
+	}
+
+	if game.State.Players != nil {
+		for _, player := range game.State.Players {
+			if player != nil && player.State != nil {
+				player.State = nil
+			}
+			if player != nil {
+				player.Client = nil
+			}
+		}
+	}
+
+	game.State.Players = nil
+	game.State = nil
+}

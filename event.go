@@ -322,9 +322,8 @@ func PlayerShootHandler(event Event, c *Client) error {
 		unlockNeeded = false
 		game.Unlock()
 
-		c.manager.Lock()
-		defer c.manager.Unlock()
-		delete(c.manager.games, c.GameID)
+		game.Cleanup()
+		c.manager.RemoveGame(c.GameID)
 
 		return nil
 	}
