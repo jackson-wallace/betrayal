@@ -1,6 +1,9 @@
 package main
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 type Player struct {
 	ID     string       `json:"id"`
@@ -29,6 +32,7 @@ type Game struct {
 	BoardSize  int
 	MainClient *Client
 	State      *GameState
+	LastUpdate time.Time
 	sync.Mutex
 }
 
@@ -68,7 +72,7 @@ func NewGame() *Game {
 func NewGameState() *GameState {
 	return &GameState{
 		Players: make(map[string]*Player),
-		Status:  "waiting",
+		Status:  "initialized",
 	}
 }
 

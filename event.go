@@ -113,6 +113,9 @@ type ReceivePlayerGiveActionPointEvent struct {
 }
 
 func InitializeGameHandler(event Event, c *Client) error {
+	c.manager.Lock()
+	defer c.manager.Unlock()
+
 	var payload SendInitializeGameEvent
 	if err := ParsePayload(event.Payload, &payload); err != nil {
 		return err
@@ -129,6 +132,7 @@ func InitializeGameHandler(event Event, c *Client) error {
 	game.JoinCode = joinCode
 	game.BoardSize = 17
 	game.MainClient = c
+	game.LastUpdate = time.Now()
 
 	player, err := CreateNewPlayer(payload.PlayerID, c, game)
 	if err != nil {
@@ -148,6 +152,9 @@ func InitializeGameHandler(event Event, c *Client) error {
 }
 
 func JoinGameHandler(event Event, c *Client) error {
+	c.manager.Lock()
+	defer c.manager.Unlock()
+
 	var payload SendJoinGameEvent
 	if err := ParsePayload(event.Payload, &payload); err != nil {
 		return err
@@ -178,6 +185,8 @@ func JoinGameHandler(event Event, c *Client) error {
 
 		c.GameID = game.ID
 
+		game.LastUpdate = time.Now()
+
 		for _, recipient := range game.AllClients() {
 			response := ReceiveJoinGameEvent{
 				PlayerCount:  len(game.State.Players),
@@ -206,6 +215,9 @@ func GetPlayerColor(playerIndex int) string {
 }
 
 func StartGameHandler(event Event, c *Client) error {
+	c.manager.Lock()
+	defer c.manager.Unlock()
+
 	var payload SendStartGameEvent
 	if err := ParsePayload(event.Payload, &payload); err != nil {
 		return err
@@ -266,6 +278,9 @@ func PlayerMoveHandler(event Event, c *Client) error {
 }
 
 func PlayerShootHandler(event Event, c *Client) error {
+	c.manager.Lock()
+	defer c.manager.Unlock()
+
 	var payload SendPlayerShootEvent
 	if err := ParsePayload(event.Payload, &payload); err != nil {
 		return err
@@ -336,6 +351,9 @@ func PlayerShootHandler(event Event, c *Client) error {
 }
 
 func PlayerIncreaseRangeHandler(event Event, c *Client) error {
+	c.manager.Lock()
+	defer c.manager.Unlock()
+
 	var payload SendPlayerIncreaseRangeEvent
 	if err := ParsePayload(event.Payload, &payload); err != nil {
 		return err
@@ -369,6 +387,9 @@ func PlayerIncreaseRangeHandler(event Event, c *Client) error {
 }
 
 func PlayerGiveActionPointHandler(event Event, c *Client) error {
+	c.manager.Lock()
+	defer c.manager.Unlock()
+
 	var payload SendPlayerGiveActionPointEvent
 	if err := ParsePayload(event.Payload, &payload); err != nil {
 		return err
