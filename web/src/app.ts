@@ -60,7 +60,7 @@ function renderStartGame(appState: AppState, ws: WSDriver, playerID: string) {
   const app = document.querySelector<HTMLDivElement>("#app")!;
   app.innerHTML = `
     <div class="center">
-      <h3 id="join-code">Join code: ____</h3>
+      <h3 id="join-code">Join code: ______</h3>
       <p id="players-in-lobby">0 player(s) in the lobby</p>
       <br />
       <button class="custom-button" id="start-btn">Start game</button>
