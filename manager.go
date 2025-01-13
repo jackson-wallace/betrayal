@@ -35,6 +35,9 @@ func NewManager(ctx context.Context) *Manager {
 	}
 
 	m.setupEventHandlers()
+
+	go m.startGameCleanupRoutine()
+
 	return m
 }
 
@@ -71,7 +74,6 @@ func (m *Manager) serveWS(w http.ResponseWriter, r *http.Request) {
 	client := NewClient(conn, m)
 
 	m.addClient(client)
-	m.startGameCleanupRoutine()
 
 	go client.readMessages()
 	go client.writeMessages()
@@ -95,32 +97,28 @@ func (m *Manager) removeClient(client *Client) {
 }
 
 func (m *Manager) startGameCleanupRoutine() {
-	go func() {
-		for {
-			time.Sleep(1 * time.Minute)
+	for {
+		time.Sleep(1 * time.Minute)
 
-			m.Lock()
-			for gameID, game := range m.games {
-				game.Lock()
-				if game.State != nil && game.State.Status == "initialized" && time.Since(game.LastUpdate) >= 5*time.Minute {
-					log.Printf("Deleting game: %s (Last updated: %v)", gameID, game.LastUpdate)
-					game.Cleanup()
-					delete(m.games, gameID)
-				}
-				game.Unlock()
+		m.Lock()
+		for gameID, game := range m.games {
+			game.Lock()
+			if game.State != nil && game.State.Status == "initialized" && time.Since(game.LastUpdate) >= 1*time.Minute {
+				log.Printf("Deleting game: %s (Last updated: %v)", gameID, game.LastUpdate)
+				delete(m.games, gameID)
 			}
-			m.Unlock()
+			game.Unlock()
 		}
-	}()
+		m.Unlock()
+	}
 }
 
 func (m *Manager) RemoveGame(gameID string) {
 	m.Lock()
 	defer m.Unlock()
 
-	game, exists := m.games[gameID]
+	_, exists := m.games[gameID]
 	if exists {
-		game.Cleanup()
 		delete(m.games, gameID)
 	}
 }
