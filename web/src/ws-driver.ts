@@ -4,6 +4,7 @@ import {
   renderInProgress,
   renderPlayerWin,
   renderWaiting,
+  setClockHtml,
   setJoinCodeHtml,
   setPlayersInLobbyHtml,
   toast,
@@ -12,6 +13,8 @@ import {
   BaseEvent,
   Event,
   EventPayloads,
+  ReceiveActionPointEvent,
+  ReceiveClockUpdateEvent,
   ReceiveInitializeGameEvent,
   ReceiveInvalidActionEvent,
   ReceiveJoinGameEvent,
@@ -69,6 +72,14 @@ export class WSDriver {
     }
 
     switch (event.type) {
+      case "receive_clock_update":
+        const receiveClockUpdateEvent = new ReceiveClockUpdateEvent(
+          event.payload.seconds,
+          event.payload.sent,
+        );
+        setClockHtml(receiveClockUpdateEvent.seconds);
+        break;
+
       case "receive_initialize_game":
         const receiveInitializeGameEvent = new ReceiveInitializeGameEvent(
           event.payload.joinCode,
@@ -149,6 +160,17 @@ export class WSDriver {
 
         if (appState.game) {
           appState.game.state = receivePlayerGiveActionPointEvent.gameState;
+        }
+        break;
+
+      case "receive_action_point":
+        const receiveActionPointEvent = new ReceiveActionPointEvent(
+          event.payload.gameState,
+          event.payload.sent,
+        );
+
+        if (appState.game) {
+          appState.game.state = receiveActionPointEvent.gameState;
         }
         break;
 

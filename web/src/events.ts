@@ -18,6 +18,8 @@ export type EventPayloads = {
   receive_player_give_action_point: ReceivePlayerGiveActionPointEvent;
   receive_invalid_action: ReceiveInvalidActionEvent;
   receive_player_win: ReceivePlayerWinEvent;
+  receive_action_point: ReceiveActionPointEvent;
+  receive_clock_update: ReceiveClockUpdateEvent;
 };
 
 export class BaseEvent {
@@ -195,6 +197,26 @@ export class ReceivePlayerWinEvent {
   constructor(gameState: GameState, playerColor: string, sent: string) {
     this.gameState = gameState;
     this.playerColor = playerColor;
+    this.sent = sent;
+  }
+}
+
+export class ReceiveActionPointEvent {
+  gameState: GameState;
+  sent: string;
+
+  constructor(gameState: GameState, sent: string) {
+    this.gameState = gameState;
+    this.sent = sent;
+  }
+}
+
+export class ReceiveClockUpdateEvent {
+  seconds: number;
+  sent: string;
+
+  constructor(seconds: number, sent: string) {
+    this.seconds = seconds;
     this.sent = sent;
   }
 }

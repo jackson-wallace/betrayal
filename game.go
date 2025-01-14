@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -27,12 +28,14 @@ type GameState struct {
 }
 
 type Game struct {
-	ID         string
-	JoinCode   string
-	BoardSize  int
-	MainClient *Client
-	State      *GameState
-	LastUpdate time.Time
+	ID          string
+	JoinCode    string
+	BoardSize   int
+	MainClient  *Client
+	State       *GameState
+	LastUpdate  time.Time
+	ClockTime   time.Duration
+	ClockTicker *time.Ticker
 	sync.Mutex
 }
 
@@ -56,7 +59,7 @@ func NewPlayerState(position Hex) *PlayerState {
 	return &PlayerState{
 		Hearts:          3,
 		Range:           1,
-		ActionPoints:    99,
+		ActionPoints:    0,
 		Position:        position,
 		CellsInRange:    []Hex{},
 		CellsAtMaxRange: []Hex{},
@@ -65,7 +68,9 @@ func NewPlayerState(position Hex) *PlayerState {
 
 func NewGame() *Game {
 	return &Game{
-		State: NewGameState(),
+		State:       NewGameState(),
+		ClockTime:   1 * time.Minute,
+		ClockTicker: nil,
 	}
 }
 
@@ -84,6 +89,57 @@ func (g *Game) AllClients() []*Client {
 		}
 	}
 	return clients
+}
+
+func (g *Game) StartClock() {
+	g.ClockTicker = time.NewTicker(1 * time.Second)
+	clockTime := g.ClockTime
+
+	go func() {
+		for range g.ClockTicker.C {
+			g.Lock()
+
+			g.ClockTime -= 1 * time.Second
+
+			if g.ClockTime <= 0 {
+				g.ClockTime = clockTime
+
+				for _, player := range g.State.Players {
+					if player.State != nil {
+						player.State.ActionPoints++
+					}
+				}
+
+				response := ReceiveActionPointEvent{
+					GameState: *g.State,
+					Sent:      time.Now(),
+				}
+
+				err := BroadcastEvent(EventReceiveActionPoint, response, g.AllClients())
+				if err != nil {
+					fmt.Printf("failed to broadcast action points: %v", err)
+				}
+			}
+
+			response := ReceiveClockUpdateEvent{
+				Seconds: int(g.ClockTime.Seconds()),
+				Sent:    time.Now(),
+			}
+
+			err := BroadcastEvent(EventReceiveClockUpdate, response, g.AllClients())
+			if err != nil {
+				fmt.Printf("failed to broadcast clock update: %v", err)
+			}
+			g.Unlock()
+		}
+	}()
+}
+
+func (g *Game) StopClock() {
+	if g.ClockTicker != nil {
+		g.ClockTicker.Stop()
+		g.ClockTicker = nil
+	}
 }
 
 func (gs *GameState) AddPlayer(player *Player) {

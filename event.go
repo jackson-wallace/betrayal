@@ -30,6 +30,8 @@ const (
 	EventReceivePlayerGiveActionPoint = "receive_player_give_action_point"
 	EventReceiveInvalidAction         = "receive_invalid_action"
 	EventReceivePlayerWin             = "receive_player_win"
+	EventReceiveActionPoint           = "receive_action_point"
+	EventReceiveClockUpdate           = "receive_clock_update"
 )
 
 type ReceiveInvalidActionEvent struct {
@@ -41,6 +43,16 @@ type ReceivePlayerWinEvent struct {
 	GameState   GameState `json:"gameState"`
 	PlayerColor string    `json:"playerColor"`
 	Sent        time.Time `json:"sent"`
+}
+
+type ReceiveActionPointEvent struct {
+	GameState GameState `json:"gameState"`
+	Sent      time.Time `json:"sent"`
+}
+
+type ReceiveClockUpdateEvent struct {
+	Seconds int       `json:"seconds"`
+	Sent    time.Time `json:"sent"`
 }
 
 type SendInitializeGameEvent struct {
@@ -229,6 +241,7 @@ func StartGameHandler(event Event, c *Client) error {
 	defer game.Unlock()
 
 	game.State.Status = "in_progress"
+	game.StartClock()
 
 	response := ReceiveStartGameEvent{
 		GameState: *game.State,
@@ -333,6 +346,8 @@ func PlayerShootHandler(event Event, c *Client) error {
 		if err := BroadcastEvent(EventReceivePlayerWin, response, game.AllClients()); err != nil {
 			return err
 		}
+
+		game.StopClock()
 
 		unlockNeeded = false
 		game.Unlock()

@@ -128,7 +128,7 @@ export function renderInProgress(
         <div class="hud">
           <p id="action-points">Action Points: 1</p>
           <p id="color">██████</p>
-          <p id="clock">01:59</p>
+          <p id="clock">01:00</p>
         </div>
         <form>
           <button class="custom-button" type="button" id="move-btn">Move</button>
@@ -266,12 +266,21 @@ export function setActionPointsHtml(actionPoints: string) {
   }
 }
 
+export function setClockHtml(time: number) {
+  const element = document.getElementById("clock");
+  if (element) {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    element.innerHTML = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+}
+
 export function toast(message: string) {
   const element = document.getElementById("toast");
   if (element) {
     element.innerHTML = message;
     element.className = "show";
-    setTimeout(function() {
+    setTimeout(function () {
       element.className = element.className.replace("show", "");
       element.innerHTML = "";
     }, 2000);

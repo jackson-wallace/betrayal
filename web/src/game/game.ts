@@ -14,6 +14,7 @@ import { Player } from "./player.js";
 export class Game {
   currentPlayerID: string;
   private _state: GameState;
+  private _selectedCell: Hex | null;
   ws: WSDriver;
   display: DisplayDriver;
 
@@ -27,7 +28,8 @@ export class Game {
     this.currentPlayerID = playerID;
     this._state = state;
     this._state.currentPlayerId = playerID;
-    this.display = new DisplayDriver(canvas, this._state);
+    this._selectedCell = null;
+    this.display = new DisplayDriver(canvas, this);
     this.initGame();
   }
 
@@ -56,15 +58,15 @@ export class Game {
     }
 
     if (isHexOnBoard(clickHex, this.display.boardSize)) {
-      this.state.selectedCell = clickHex;
+      this.selectedCell = clickHex;
       this.display.render();
-    } else if (this.state.selectedCell) {
-      this.state.selectedCell = null;
+    } else if (this.selectedCell) {
+      this.selectedCell = null;
       this.display.render();
     }
   }
 
-  endGame() { }
+  endGame() {}
 
   handlePlayerMove() {
     const playerState = this.state.players[this.currentPlayerID].state;
@@ -72,14 +74,14 @@ export class Game {
       return;
     }
 
-    if (this.state.selectedCell) {
+    if (this.selectedCell) {
       const outgoingEvent = new SendPlayerMoveEvent(
         this.currentPlayerID,
-        this.state.selectedCell,
+        this.selectedCell,
       );
       this.ws.sendEvent("send_player_move", outgoingEvent);
 
-      this.state.selectedCell = null;
+      this.selectedCell = null;
     } else {
       toast("Select a position to move");
     }
@@ -91,14 +93,14 @@ export class Game {
       return;
     }
 
-    if (this.state.selectedCell) {
+    if (this.selectedCell) {
       const outgoingEvent = new SendPlayerShootEvent(
         this.currentPlayerID,
-        this.state.selectedCell,
+        this.selectedCell,
       );
       this.ws.sendEvent("send_player_shoot", outgoingEvent);
 
-      this.state.selectedCell = null;
+      this.selectedCell = null;
     } else {
       toast("Select a player to shoot");
     }
@@ -115,7 +117,7 @@ export class Game {
     );
     this.ws.sendEvent("send_player_increase_range", outgoingEvent);
 
-    this.state.selectedCell = null;
+    this.selectedCell = null;
   }
 
   handlePlayerGiveActionPoint() {
@@ -124,17 +126,25 @@ export class Game {
       return;
     }
 
-    if (this.state.selectedCell) {
+    if (this.selectedCell) {
       const outgoingEvent = new SendPlayerGiveActionPointEvent(
         this.currentPlayerID,
-        this.state.selectedCell,
+        this.selectedCell,
       );
       this.ws.sendEvent("send_player_give_action_point", outgoingEvent);
 
-      this.state.selectedCell = null;
+      this.selectedCell = null;
     } else {
       toast("Select a player to give action point");
     }
+  }
+
+  get selectedCell(): Hex | null {
+    return this._selectedCell;
+  }
+
+  set selectedCell(hex: Hex | null) {
+    this._selectedCell = hex;
   }
 
   get state(): GameState {
@@ -143,7 +153,7 @@ export class Game {
 
   set state(state: GameState) {
     this._state = state;
-    this.display.gameState = state;
+    // this.display.game = state;
 
     const player = state.players[this.currentPlayerID];
     if (player.state) {
@@ -160,13 +170,11 @@ export class GameState {
   private _players: Record<string, Player>;
   private _currentPlayerId: string;
   private _status: "waiting" | "active" | "completed";
-  private _selectedCell: Hex | null;
 
   constructor(currentPlayerId: string, status: "waiting" = "waiting") {
     this._players = {};
     this._currentPlayerId = currentPlayerId;
     this._status = status;
-    this._selectedCell = null;
   }
 
   get players(): Record<string, Player> {
@@ -189,14 +197,6 @@ export class GameState {
     this._status = newStatus;
   }
 
-  get selectedCell(): Hex | null {
-    return this._selectedCell;
-  }
-
-  set selectedCell(hex: Hex | null) {
-    this._selectedCell = hex;
-  }
-
   addPlayer(player: Player): void {
     this._players[player.id] = player;
   }
@@ -204,19 +204,4 @@ export class GameState {
   removePlayer(playerId: string): void {
     delete this._players[playerId];
   }
-
-  // toJSON(): string {
-  //   return JSON.stringify({
-  //     players: this._players,
-  //     currentPlayerId: this._currentPlayerId,
-  //     status: this._status,
-  //   });
-  // }
-
-  // static fromJSON(json: string): GameState {
-  //   const data = JSON.parse(json);
-  //   const gameState = new GameState(data.currentPlayerId, data.status);
-  //   gameState._players = data.players || {};
-  //   return gameState;
-  // }
 }

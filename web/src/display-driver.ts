@@ -1,5 +1,5 @@
 import { Board, Cell } from "./game/board.js";
-import { GameState } from "./game/game.js";
+import { Game } from "./game/game.js";
 import { Player } from "./game/player.js";
 import { calculateCellRadius, hexToPixelCoordinates } from "./utils/utils.js";
 
@@ -11,9 +11,9 @@ export class DisplayDriver {
   private _cellWidth: number;
   private _cellHeight: number;
   board: Board;
-  gameState: GameState;
+  game: Game;
 
-  constructor(canvas: HTMLCanvasElement, gameState: GameState) {
+  constructor(canvas: HTMLCanvasElement, game: Game) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     this._boardSize = 17;
@@ -24,7 +24,7 @@ export class DisplayDriver {
     );
     this._cellWidth = Math.sqrt(3) * this._cellRadius;
     this._cellHeight = 2 * this._cellRadius;
-    this.gameState = gameState;
+    this.game = game;
     this.board = new Board(this, this._boardSize);
   }
 
@@ -38,8 +38,8 @@ export class DisplayDriver {
   }
 
   private renderSelectedCell() {
-    if (this.gameState.selectedCell) {
-      const cell = this.board.getCell(this.gameState.selectedCell);
+    if (this.game.selectedCell) {
+      const cell = this.board.getCell(this.game.selectedCell);
       if (cell) {
         this.renderCellOutline(cell, 2, true, "white");
       }
@@ -58,7 +58,7 @@ export class DisplayDriver {
   }
 
   private renderPlayers() {
-    for (let player of Object.values(this.gameState.players)) {
+    for (let player of Object.values(this.game.state.players)) {
       if (player.state) {
         const cell = this.board.getCell(player.state.position);
         if (cell) {
@@ -71,7 +71,7 @@ export class DisplayDriver {
   }
 
   private renderPlayerRanges() {
-    for (let player of Object.values(this.gameState.players)) {
+    for (let player of Object.values(this.game.state.players)) {
       if (player.state) {
         const cell = this.board.getCell(player.state.position);
         if (cell) {
