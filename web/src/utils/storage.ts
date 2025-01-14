@@ -1,5 +1,3 @@
-// TODO
-// Use cookies instead of localStorage
 export function getPlayerID() {
   let id = window.localStorage.getItem("id");
 

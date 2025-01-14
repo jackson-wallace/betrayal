@@ -1,6 +1,6 @@
 import { Game, GameState } from "./game/game.js";
 import { initFavicon } from "./utils/favicon.js";
-import { getPlayerID } from "./utils/player.js";
+import { getPlayerID } from "./utils/storage.js";
 import { WSDriver } from "./ws-driver.js";
 import {
   SendInitializeGameEvent,
@@ -25,6 +25,8 @@ export const appState: AppState = {
   game: null,
 };
 
+history.replaceState(appState, "");
+
 const playerID = getPlayerID();
 
 initFavicon();
@@ -47,11 +49,13 @@ function renderStartOrJoin(appState: AppState, ws: WSDriver, playerID: string) {
     const outgoingEvent = new SendInitializeGameEvent(playerID);
     ws.sendEvent("send_initialize_game", outgoingEvent);
     appState.currentState = GameStatus.StartGame;
+    history.pushState(appState, "");
     renderApp(appState, ws, playerID);
   });
 
   document.getElementById("join-game")!.addEventListener("click", () => {
     appState.currentState = GameStatus.JoinGame;
+    history.pushState(appState, "");
     renderApp(appState, ws, playerID);
   });
 }
@@ -228,6 +232,17 @@ function renderApp(appState: AppState, ws: WSDriver, playerID: string) {
 }
 
 renderApp(appState, ws, playerID);
+
+window.addEventListener("popstate", (event) => {
+  if (event.state) {
+    renderApp(event.state, ws, playerID);
+
+    if (event.state.currentState === GameStatus.StartGame) {
+      const outgoingEvent = new SendInitializeGameEvent(playerID);
+      ws.sendEvent("send_initialize_game", outgoingEvent);
+    }
+  }
+});
 
 export function setJoinCodeHtml(joinCode: string) {
   const element = document.getElementById("join-code");
