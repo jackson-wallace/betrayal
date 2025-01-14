@@ -114,9 +114,6 @@ func (m *Manager) startGameCleanupRoutine() {
 }
 
 func (m *Manager) RemoveGame(gameID string) {
-	m.Lock()
-	defer m.Unlock()
-
 	_, exists := m.games[gameID]
 	if exists {
 		delete(m.games, gameID)
