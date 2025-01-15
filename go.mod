@@ -1,4 +1,4 @@
-module github.com/jackson-wallace/banned-game
+module github.com/jackson-wallace/betrayal
 
 go 1.23.4
 
