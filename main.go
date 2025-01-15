@@ -9,7 +9,7 @@ import (
 func main() {
 	setupAPI()
 
-	log.Fatal(http.ListenAndServeTLS(":8080", "server.crt", "server.key", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func setupAPI() {
@@ -20,5 +20,4 @@ func setupAPI() {
 
 	http.Handle("/", http.FileServer(http.Dir("./web/dist")))
 	http.HandleFunc("/ws", manager.serveWS)
-	// http.HandleFunc("/login", manager.loginHandler)
 }

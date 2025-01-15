@@ -37,7 +37,7 @@ export class WSDriver {
     if (window["WebSocket"]) {
       console.log("supports websockets");
 
-      this.conn = new WebSocket("wss://" + document.location.host + "/ws");
+      this.conn = new WebSocket("ws://" + document.location.host + "/ws");
 
       this.conn.onopen = () => this.handleOpen();
       this.conn.onclose = () => this.handleClose();
