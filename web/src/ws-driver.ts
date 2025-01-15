@@ -1,14 +1,4 @@
-import {
-  appState,
-  GameStatus,
-  renderInProgress,
-  renderPlayerWin,
-  renderWaiting,
-  setClockHtml,
-  setJoinCodeHtml,
-  setPlayersInLobbyHtml,
-  toast,
-} from "./app.js";
+import { appState, GameStatus, setPlayersInLobbyHtml, toast } from "./app.js";
 import {
   BaseEvent,
   Event,
@@ -25,6 +15,10 @@ import {
   ReceivePlayerWinEvent,
   ReceiveStartGameEvent,
 } from "./events.js";
+import { renderPlayerWin } from "./pages/game-over.js";
+import { renderInProgress, setClockHtml } from "./pages/in-progress.js";
+import { setJoinCodeHtml } from "./pages/start-game.js";
+import { renderWaiting } from "./pages/waiting.js";
 
 export class WSDriver {
   conn: WebSocket | null;
@@ -195,7 +189,7 @@ export class WSDriver {
         }
 
         setTimeout(() => {
-          renderPlayerWin(receivePlayerWinEvent.playerColor);
+          renderPlayerWin(this, receivePlayerWinEvent.playerColor);
         }, 2000);
         break;
 

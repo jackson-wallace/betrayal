@@ -1,4 +1,4 @@
-import { setActionPointsHtml, setBlockColor, toast } from "../app.js";
+import { toast } from "../app.js";
 import { DisplayDriver } from "../display-driver.js";
 import {
   SendPlayerGiveActionPointEvent,
@@ -6,6 +6,7 @@ import {
   SendPlayerMoveEvent,
   SendPlayerShootEvent,
 } from "../events.js";
+import { setActionPointsHtml, setBlockColor } from "../pages/in-progress.js";
 import { initFavicon } from "../utils/favicon.js";
 import { Hex, isHexOnBoard, pixelToHexCoordinates } from "../utils/utils.js";
 import { WSDriver } from "../ws-driver.js";
@@ -65,8 +66,6 @@ export class Game {
       this.display.render();
     }
   }
-
-  endGame() {}
 
   handlePlayerMove() {
     const playerState = this.state.players[this.currentPlayerID].state;
