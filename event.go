@@ -222,7 +222,7 @@ func JoinGameHandler(event Event, c *Client) error {
 }
 
 func GetPlayerColor(playerIndex int) string {
-	colors := []string{"#E40027", "#FF9526", "#F8D034", "#2AA146", "lightblue", "indigo", "violet"}
+	colors := []string{"#E40027", "#FF9526", "#F8D034", "#2AA146", "#00CBCB", "#7E60A9", "#EA9AB2"}
 	return colors[playerIndex%len(colors)]
 }
 
