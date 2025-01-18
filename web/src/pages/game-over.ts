@@ -1,4 +1,5 @@
 import { appState, GameStatus, playerID, renderApp } from "../app.js";
+import { initFavicon } from "../utils/favicon.js";
 import { WSDriver } from "../ws-driver.js";
 
 export function renderPlayerWin(ws: WSDriver, playerColor: string) {
@@ -20,5 +21,6 @@ export function renderPlayerWin(ws: WSDriver, playerColor: string) {
     appState.game = null;
     appState.currentState = GameStatus.StartOrJoin;
     renderApp(appState, ws, playerID);
+    initFavicon()
   });
 }
