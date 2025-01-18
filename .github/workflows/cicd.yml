@@ -2,8 +2,8 @@ name: Deploy Betrayal
 
 on:
   push:
-  branches:
-    - main
+    branches:
+      - main
 
 jobs:
   build:
