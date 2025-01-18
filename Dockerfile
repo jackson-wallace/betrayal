@@ -27,6 +27,8 @@ WORKDIR /app
 
 COPY --from=builder /app/main .
 
+COPY .env .env
+
 COPY --from=ts-builder /web/src/ ./web/dist/
 
 EXPOSE 8080
