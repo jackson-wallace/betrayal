@@ -16,8 +16,6 @@ WORKDIR /web
 
 COPY web/tsconfig.json ./tsconfig.json
 COPY web/src/ ./src/
-COPY web/dist/index.html ./web/dist/index.html
-COPY web/dist/style.css ./web/dist/style.css
 
 RUN npm install -g typescript
 
@@ -32,6 +30,9 @@ COPY --from=builder /app/main .
 COPY .env .env
 
 COPY --from=ts-builder /web/dist/ ./web/dist/
+COPY web/dist/index.html ./web/dist/index.html
+COPY web/dist/style.css ./web/dist/style.css
+
 
 EXPOSE 8080
 
