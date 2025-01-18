@@ -28,4 +28,4 @@ jobs:
       - name: Delete old container
         run: docker rm -f betrayal-container
       - name: Run docker container
-        run: docker run -d -p 8080:8080 --name betrayal-container -v home/ubuntu/certs:/app:ro jacksonwallace/betrayal
+        run: docker run -d -p 8080:8080 --name betrayal-container -v /home/ubuntu/certs:/app:ro jacksonwallace/betrayal
