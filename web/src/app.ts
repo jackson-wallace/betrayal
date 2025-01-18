@@ -37,7 +37,6 @@ ws.connectWebsocket();
 history.replaceState(appState, "");
 
 export function renderApp(appState: AppState, ws: WSDriver, playerID: string) {
-  console.log("renderApp()");
   switch (appState.currentState) {
     case GameStatus.StartOrJoin:
       renderStartOrJoin(appState, ws, playerID);

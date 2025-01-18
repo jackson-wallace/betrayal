@@ -7,7 +7,6 @@ export function renderStartOrJoin(
   ws: WSDriver,
   playerID: string,
 ) {
-  console.log("renderStartOrJoin()");
   const app = document.querySelector<HTMLDivElement>("#app")!;
   app.innerHTML = `
     <div class="center">

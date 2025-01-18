@@ -83,9 +83,6 @@ func AxialScale(hex Hex, factor int) Hex {
 }
 
 func AxialRing(boardSize int, center Hex, radius int) []Hex {
-	// lowerBound := boardSize / 2
-	// upperBound := (boardSize-1)*2 - lowerBound
-
 	var results []Hex
 	hex := AxialAdd(center, AxialScale(AxialDirection(4), radius))
 	for i := 0; i < 6; i++ {
@@ -104,7 +101,7 @@ func AxialSpiral(boardSize int, center Hex, radius int) []Hex {
 	for i := 1; i <= radius; i++ {
 		results = append(results, AxialRing(boardSize, center, i)...)
 	}
-    results = append(results, center)
+	results = append(results, center)
 	return results
 }
 
