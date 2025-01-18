@@ -17,7 +17,7 @@ func main() {
 		port = "8080"
 	}
 
-    log.Fatal(http.ListenAndServeTLS(":"+port, "server.crt", "server.key", nil))
+	log.Fatal(http.ListenAndServeTLS(":"+port, "./certs/server.crt", "./certs/server.key", nil))
 }
 
 func setupAPI() {
