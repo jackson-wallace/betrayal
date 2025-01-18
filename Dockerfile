@@ -29,7 +29,7 @@ COPY --from=builder /app/main .
 
 COPY .env .env
 
-COPY --from=ts-builder /web/src/ ./web/dist/
+COPY --from=ts-builder /web/dist/ ./web/dist/
 
 EXPOSE 8080
 
