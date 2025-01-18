@@ -101,15 +101,25 @@ func (m *Manager) startGameCleanupRoutine() {
 		time.Sleep(1 * time.Minute)
 
 		m.Lock()
+		games := make(map[string]*Game, len(m.games))
 		for gameID, game := range m.games {
+			games[gameID] = game
+		}
+		m.Unlock()
+
+		for gameID, game := range games {
 			game.Lock()
 			if game.State != nil && game.State.Status == "initialized" && time.Since(game.LastUpdate) >= 1*time.Minute {
 				log.Printf("Deleting game: %s (Last updated: %v)", gameID, game.LastUpdate)
+				game.Unlock()
+
+				m.Lock()
 				delete(m.games, gameID)
+				m.Unlock()
+			} else {
+				game.Unlock()
 			}
-			game.Unlock()
 		}
-		m.Unlock()
 	}
 }
 

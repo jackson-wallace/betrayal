@@ -126,7 +126,6 @@ type ReceivePlayerGiveActionPointEvent struct {
 
 func InitializeGameHandler(event Event, c *Client) error {
 	c.manager.Lock()
-	defer c.manager.Unlock()
 
 	var payload SendInitializeGameEvent
 	if err := ParsePayload(event.Payload, &payload); err != nil {
@@ -137,24 +136,25 @@ func InitializeGameHandler(event Event, c *Client) error {
 	joinCode := NewJoinCode(3)
 	game := NewGame()
 
-	game.Lock()
-	defer game.Unlock()
-
 	game.ID = gameID
 	game.JoinCode = joinCode
 	game.BoardSize = 17
 	game.MainClient = c
 	game.LastUpdate = time.Now()
 
+	c.GameID = gameID
+	c.manager.games[gameID] = game
+	c.manager.Unlock()
+
 	player, err := CreateNewPlayer(payload.PlayerID, c, game)
 	if err != nil {
 		return fmt.Errorf("failed to create player: %v", err)
 	}
-	player.Color = "#264BCC"
-	game.State.AddPlayer(player)
 
-	c.GameID = gameID
-	c.manager.games[gameID] = game
+	player.Color = "#264BCC"
+	game.Lock()
+	defer game.Unlock()
+	game.State.AddPlayer(player)
 
 	response := ReceiveInitializeGameEvent{
 		JoinCode: joinCode,
@@ -251,6 +251,9 @@ func StartGameHandler(event Event, c *Client) error {
 }
 
 func PlayerMoveHandler(event Event, c *Client) error {
+	c.manager.Lock()
+	defer c.manager.Unlock()
+
 	var payload SendPlayerMoveEvent
 	if err := ParsePayload(event.Payload, &payload); err != nil {
 		return err
