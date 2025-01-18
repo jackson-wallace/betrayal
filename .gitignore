@@ -2,6 +2,8 @@
 
 *.js
 
+gencert.bash
+
 *.crt
 *.key
 
