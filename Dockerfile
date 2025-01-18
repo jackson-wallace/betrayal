@@ -14,7 +14,8 @@ FROM node:18 AS ts-builder
 
 WORKDIR /web
 
-COPY web/tsconfig.json web/src/ ./src/
+COPY web/tsconfig.json ./tsconfig.json
+COPY web/src/ ./src/
 
 RUN npm install -g typescript
 
