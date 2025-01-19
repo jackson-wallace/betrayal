@@ -116,6 +116,13 @@ func (m *Manager) startGameCleanupRoutine() {
 				m.Lock()
 				delete(m.games, gameID)
 				m.Unlock()
+			} else if game.State != nil && game.State.Status == "in_progress" && time.Since(game.LastUpdate) >= 10*time.Minute {
+				log.Printf("Deleting game: %s (Last updated: %v)", gameID, game.LastUpdate)
+				game.Unlock()
+
+				m.Lock()
+				delete(m.games, gameID)
+				m.Unlock()
 			} else {
 				game.Unlock()
 			}

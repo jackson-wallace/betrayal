@@ -242,6 +242,7 @@ func StartGameHandler(event Event, c *Client) error {
 
 	game.State.Status = "in_progress"
 	game.StartClock()
+	game.LastUpdate = time.Now()
 
 	response := ReceiveStartGameEvent{
 		GameState: *game.State,
@@ -285,6 +286,7 @@ func PlayerMoveHandler(event Event, c *Client) error {
 	player.State.Position = payload.Hex
 	player.State.CellsInRange = AxialSpiral(game.BoardSize, payload.Hex, player.State.Range)
 	player.State.CellsAtMaxRange = AxialRing(game.BoardSize, payload.Hex, player.State.Range)
+	game.LastUpdate = time.Now()
 
 	response := ReceivePlayerMoveEvent{
 		GameState: *game.State,
@@ -338,6 +340,7 @@ func PlayerShootHandler(event Event, c *Client) error {
 	if target.State.Hearts <= 0 {
 		target.State = nil
 	}
+	game.LastUpdate = time.Now()
 
 	isWinner := game.State.CheckForWinner()
 	if isWinner {
@@ -394,6 +397,7 @@ func PlayerIncreaseRangeHandler(event Event, c *Client) error {
 	player.State.ActionPoints -= player.State.Range
 	player.State.CellsInRange = AxialSpiral(game.BoardSize, player.State.Position, player.State.Range)
 	player.State.CellsAtMaxRange = AxialRing(game.BoardSize, player.State.Position, player.State.Range)
+	game.LastUpdate = time.Now()
 
 	response := ReceivePlayerIncreaseRangeEvent{
 		GameState: *game.State,
@@ -440,6 +444,7 @@ func PlayerGiveActionPointHandler(event Event, c *Client) error {
 
 	player.State.ActionPoints -= 1
 	target.State.ActionPoints += 1
+	game.LastUpdate = time.Now()
 
 	response := ReceivePlayerGiveActionPointEvent{
 		GameState: *game.State,
