@@ -7,6 +7,7 @@ export function renderRules() {
         max-width: 472px;
         padding-left: 32px;
         padding-right: 16px;
+        font-size: 14px;
       }
     
       li ul {
