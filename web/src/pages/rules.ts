@@ -4,6 +4,7 @@ export function renderRules() {
     <style>
       ul {
         list-style-type: disc;
+        max-width: 472px;
         padding-left: 32px;
         padding-right: 16px;
       }
