@@ -9,12 +9,8 @@ export function renderRules() {
         padding-right: 16px;
       }
     
-      li {
-        margin-bottom: 10px;
-      }
-    
       li ul {
-        margin-top: 10px;
+        list-style-type: circle;
       }
     </style>
     <div class="center">
