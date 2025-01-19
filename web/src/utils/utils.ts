@@ -146,10 +146,13 @@ export function calculateCellRadius(
   canvasWidth: number,
   boardSize: number,
 ) {
-  const canvasSize = Math.min(canvasHeight / 2, canvasWidth / 2);
+  const canvasSize = Math.min(
+    canvasHeight / devicePixelRatio,
+    canvasWidth / devicePixelRatio,
+  );
   const cellRadius = canvasSize / boardSize;
 
-  return cellRadius / 1.9;
+  return cellRadius / 1.85;
 }
 
 export function isHexOnBoard(hex: Hex, boardSize: number) {
