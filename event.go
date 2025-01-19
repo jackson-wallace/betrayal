@@ -338,6 +338,7 @@ func PlayerShootHandler(event Event, c *Client) error {
 	player.State.ActionPoints -= 1
 	target.State.Hearts -= 1
 	if target.State.Hearts <= 0 {
+        player.State.ActionPoints += target.State.ActionPoints
 		target.State = nil
 	}
 	game.LastUpdate = time.Now()
