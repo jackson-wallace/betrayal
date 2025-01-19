@@ -5,6 +5,7 @@ export function renderRules() {
       ul {
         list-style-type: disc;
         padding-left: 32px;
+        padding-right: 16px;
       }
     
       li {
