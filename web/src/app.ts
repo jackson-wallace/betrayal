@@ -7,6 +7,7 @@ import { renderStartOrJoin } from "./pages/start-or-join.js";
 import { renderStartGame } from "./pages/start-game.js";
 import { renderJoinGame } from "./pages/join-game.js";
 import { renderWaiting } from "./pages/waiting.js";
+import { renderRules } from "./pages/rules.js";
 
 initFavicon();
 
@@ -14,6 +15,7 @@ export enum GameStatus {
   StartOrJoin = "startOrJoin",
   StartGame = "startGame",
   JoinGame = "joinGame",
+  Rules = "rules",
   Waiting = "waiting",
   InProgress = "inProgress",
 }
@@ -41,6 +43,9 @@ export function renderApp(appState: AppState, ws: WSDriver, playerID: string) {
     case GameStatus.StartOrJoin:
       renderStartOrJoin(appState, ws, playerID);
       break;
+    case GameStatus.Rules:
+      renderRules();
+      break;
     case GameStatus.StartGame:
       renderStartGame(appState, ws, playerID);
       break;
@@ -49,9 +54,6 @@ export function renderApp(appState: AppState, ws: WSDriver, playerID: string) {
       break;
     case GameStatus.Waiting:
       renderWaiting();
-      break;
-    case GameStatus.InProgress:
-      // renderInProgress(appState, ws);
       break;
   }
 }

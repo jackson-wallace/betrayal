@@ -54,6 +54,21 @@ input {
   color: #2c2c2e;
 }
 
+.new-or-join-container {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+}
+
+#rules-link {
+  color: #97b1fa;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 16px;
+  display: inline-block;
+}
+
 .join-input {
   text-align: center;
   background-color: #2c2c2e;
@@ -92,7 +107,7 @@ input {
 .hud {
   display: flex;
   align-items: center;
-  max-width: 472px; 
+  max-width: 472px;
   width: 100%;
   margin: 0 auto;
   justify-content: space-around;
@@ -121,26 +136,54 @@ input {
 
 #toast.show {
   visibility: visible;
-  -webkit-animation: fadein 0.5s, fadeout 0.5s 1.5s;
-  animation: fadein 0.5s, fadeout 0.5s 1.5s;
+  -webkit-animation:
+    fadein 0.5s,
+    fadeout 0.5s 1.5s;
+  animation:
+    fadein 0.5s,
+    fadeout 0.5s 1.5s;
 }
 
 @-webkit-keyframes fadein {
-  from {top: 0; opacity: 0;} 
-  to {top: 30px; opacity: 1;}
+  from {
+    top: 0;
+    opacity: 0;
+  }
+  to {
+    top: 30px;
+    opacity: 1;
+  }
 }
 
 @keyframes fadein {
-  from {top: 0; opacity: 0;}
-  to {top: 30px; opacity: 1;}
+  from {
+    top: 0;
+    opacity: 0;
+  }
+  to {
+    top: 30px;
+    opacity: 1;
+  }
 }
 
 @-webkit-keyframes fadeout {
-  from {top: 30px; opacity: 1;} 
-  to {top: 0; opacity: 0;}
+  from {
+    top: 30px;
+    opacity: 1;
+  }
+  to {
+    top: 0;
+    opacity: 0;
+  }
 }
 
 @keyframes fadeout {
-  from {top: 30px; opacity: 1;}
-  to {top: 0; opacity: 0;}
+  from {
+    top: 30px;
+    opacity: 1;
+  }
+  to {
+    top: 0;
+    opacity: 0;
+  }
 }
