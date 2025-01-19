@@ -44,8 +44,8 @@ export class Game {
 
   handleBoardClick(event: MouseEvent) {
     const clickHex = pixelToHexCoordinates(
-      event.clientX,
-      event.clientY,
+      event.pageX,
+      event.pageY,
       this.display.canvas,
       this.display.cellRadius,
       this.display.cellWidth,
