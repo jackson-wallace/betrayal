@@ -109,7 +109,7 @@ func (m *Manager) startGameCleanupRoutine() {
 
 		for gameID, game := range games {
 			game.Lock()
-			if game.State != nil && game.State.Status == "initialized" && time.Since(game.LastUpdate) >= 1*time.Minute {
+			if game.State != nil && game.State.Status == "initialized" && time.Since(game.LastUpdate) >= 5*time.Minute {
 				log.Printf("Deleting game: %s (Last updated: %v)", gameID, game.LastUpdate)
 				game.Unlock()
 
