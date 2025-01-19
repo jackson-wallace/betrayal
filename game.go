@@ -58,7 +58,7 @@ func NewPlayer(position Hex) *Player {
 func NewPlayerState(position Hex) *PlayerState {
 	return &PlayerState{
 		Hearts:          3,
-		Range:           1,
+		Range:           2,
 		ActionPoints:    0,
 		Position:        position,
 		CellsInRange:    []Hex{},
