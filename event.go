@@ -138,7 +138,6 @@ func InitializeGameHandler(event Event, c *Client) error {
 
 	game.ID = gameID
 	game.JoinCode = joinCode
-	game.BoardSize = 17
 	game.MainClient = c
 	game.LastUpdate = time.Now()
 
@@ -240,6 +239,15 @@ func StartGameHandler(event Event, c *Client) error {
 	game.Lock()
 	defer game.Unlock()
 
+	game.BoardSize = (2 * len(game.State.Players)) + 1
+
+	for _, player := range game.State.Players {
+		position := GetRandomPosition(game.BoardSize, game.State.Players)
+		player.State.Position = position
+		player.State.CellsInRange = AxialSpiral(game.BoardSize, position, player.State.Range)
+		player.State.CellsAtMaxRange = AxialRing(game.BoardSize, position, player.State.Range)
+	}
+
 	game.State.Status = "in_progress"
 	game.StartClock()
 	game.LastUpdate = time.Now()
@@ -338,7 +346,7 @@ func PlayerShootHandler(event Event, c *Client) error {
 	player.State.ActionPoints -= 1
 	target.State.Hearts -= 1
 	if target.State.Hearts <= 0 {
-        player.State.ActionPoints += target.State.ActionPoints
+		player.State.ActionPoints += target.State.ActionPoints
 		target.State = nil
 	}
 	game.LastUpdate = time.Now()

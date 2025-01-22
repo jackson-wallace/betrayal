@@ -16,7 +16,7 @@ export class DisplayDriver {
   constructor(canvas: HTMLCanvasElement, game: Game) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-    this._boardSize = 17;
+    this._boardSize = 2 * Object.keys(game.state.players).length + 1;
     this._cellRadius = calculateCellRadius(
       this.canvas.height,
       this.canvas.width,

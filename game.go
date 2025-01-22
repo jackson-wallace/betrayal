@@ -40,27 +40,24 @@ type Game struct {
 }
 
 func CreateNewPlayer(playerID string, client *Client, game *Game) (*Player, error) {
-	position := GetRandomPosition(game.BoardSize, game.State.Players)
-	player := NewPlayer(position)
+	player := NewPlayer()
 	player.ID = playerID
 	player.Client = client
-	player.State.CellsInRange = AxialSpiral(game.BoardSize, position, player.State.Range)
-	player.State.CellsAtMaxRange = AxialRing(game.BoardSize, position, player.State.Range)
 	return player, nil
 }
 
-func NewPlayer(position Hex) *Player {
+func NewPlayer() *Player {
 	return &Player{
-		State: NewPlayerState(position),
+		State: NewPlayerState(),
 	}
 }
 
-func NewPlayerState(position Hex) *PlayerState {
+func NewPlayerState() *PlayerState {
 	return &PlayerState{
 		Hearts:          3,
 		Range:           2,
 		ActionPoints:    0,
-		Position:        position,
+		Position:        Hex{},
 		CellsInRange:    []Hex{},
 		CellsAtMaxRange: []Hex{},
 	}
