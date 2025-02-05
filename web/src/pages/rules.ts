@@ -41,7 +41,7 @@ export function renderRules() {
           </ul>
         </li>
         <li>
-          A player is eleminitated when they have 0 hearts, and any Action Points that the eleminated player had will be transferred to the player who eleminated them.
+          A player is eliminitated when they have 0 hearts, and any Action Points that the eleminated player had will be transferred to the player who eleminated them.
         </li>
       </ul>
       <h3>Be the last player standing.</h3>
