@@ -21,6 +21,6 @@ export function renderPlayerWin(ws: WSDriver, playerColor: string) {
     appState.game = null;
     appState.currentState = GameStatus.StartOrJoin;
     renderApp(appState, ws, playerID);
-    initFavicon()
+    initFavicon();
   });
 }

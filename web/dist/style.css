@@ -149,6 +149,7 @@ input {
     top: 0;
     opacity: 0;
   }
+
   to {
     top: 30px;
     opacity: 1;
@@ -160,6 +161,7 @@ input {
     top: 0;
     opacity: 0;
   }
+
   to {
     top: 30px;
     opacity: 1;
@@ -171,6 +173,7 @@ input {
     top: 30px;
     opacity: 1;
   }
+
   to {
     top: 0;
     opacity: 0;
@@ -182,6 +185,7 @@ input {
     top: 30px;
     opacity: 1;
   }
+
   to {
     top: 0;
     opacity: 0;
