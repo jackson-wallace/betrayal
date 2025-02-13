@@ -11,13 +11,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var (
-	websocketUpgrader = websocket.Upgrader{
-		CheckOrigin:     checkOrigin,
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-	}
-)
+var websocketUpgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
 type Manager struct {
 	clients ClientList
@@ -109,7 +106,8 @@ func (m *Manager) startGameCleanupRoutine() {
 
 		for gameID, game := range games {
 			game.Lock()
-			if game.State != nil && game.State.Status == "initialized" && time.Since(game.LastUpdate) >= 5*time.Minute {
+			if game.State != nil && game.State.Status == "initialized" &&
+				time.Since(game.LastUpdate) >= 5*time.Minute {
 				log.Printf("Deleting game: %s (Last updated: %v)", gameID, game.LastUpdate)
 				game.Unlock()
 
@@ -134,17 +132,5 @@ func (m *Manager) RemoveGame(gameID string) {
 	_, exists := m.games[gameID]
 	if exists {
 		delete(m.games, gameID)
-	}
-}
-
-func checkOrigin(r *http.Request) bool {
-	origin := r.Header.Get("Origin")
-	switch origin {
-	case "https://localhost:8080":
-		return true
-	case "https://3.89.127.174:8080":
-		return true
-	default:
-		return false
 	}
 }

@@ -17,11 +17,10 @@ func main() {
 		port = "8080"
 	}
 
-	log.Fatal(http.ListenAndServeTLS(":"+port, "./certs/server.crt", "./certs/server.key", nil))
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 func setupAPI() {
-
 	ctx := context.Background()
 
 	manager := NewManager(ctx)
@@ -32,7 +31,6 @@ func setupAPI() {
 
 func goDotEnvVariable(key string) string {
 	err := godotenv.Load(".env")
-
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
